@@ -1,0 +1,44 @@
+.container {
+  padding: 2rem;
+  background-color: #f8fafc;
+  min-height: 100vh;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.loading,
+.empty {
+  color: #64748b;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.table th {
+  background-color: #e2e8f0;
+  text-align: left;
+  padding: 0.75rem;
+  font-weight: 600;
+}
+
+.table td {
+  padding: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.status {
+  color: #2563eb;
+  font-weight: 500;
+}
