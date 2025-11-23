@@ -12,6 +12,7 @@
     "@capacitor/cli": "^7.4.4",
     "@capacitor/core": "^7.4.4",
     "antd": "^5.14.0",
+    "axios": "^1.13.2",
     "firebase": "^12.4.0",
     "firebase-admin": "^13.5.0",
     "framer-motion": "^12.23.22",
