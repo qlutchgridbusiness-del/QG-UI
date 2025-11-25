@@ -57,7 +57,7 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, setUserRole }) => {
       router.push("/business-dashboard/service-requests");
     } catch (err) {
       console.error("Failed to fetch bookings:", err);
-      alert("Failed to fetch bookings. Please try again.");
+      alert("Failed to fetch bookings. Please try again");
     } finally {
       setDropdownOpen(false);
     }
