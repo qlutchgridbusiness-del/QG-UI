@@ -19,7 +19,7 @@ export default function MyBookings() {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const res = await axios.get("http://localhost:5001/bookings");
+        const res = await axios.get("http://3.230.169.3:5001/bookings");
         console.log("check--bookings", res);
         setBookings(res.data);
       } catch (err) {

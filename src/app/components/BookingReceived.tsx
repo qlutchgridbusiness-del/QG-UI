@@ -27,7 +27,7 @@ const BookingReceived: React.FC = () => {
   const fetchBookings = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:5001/get-business-bookings?business_email=${businessEmail}`
+        `http://3.230.169.3:5001/get-business-bookings?business_email=${businessEmail}`
       );
       const sorted = res.data.bookings
         .sort((a: Booking, b: Booking) => (a.status === "cancelled" ? 1 : -1))
@@ -41,7 +41,7 @@ const BookingReceived: React.FC = () => {
 
   const updateBooking = async (id: string, status: string, paymentStatus: string) => {
     try {
-      await axios.post("http://localhost:5001/update-business-booking", {
+      await axios.post("http://3.230.169.3:5001/update-business-booking", {
         id,
         status: status === "denied by business" && paymentStatus === "paid" ? "Refund Processed..." : status,
       });

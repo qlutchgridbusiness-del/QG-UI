@@ -23,7 +23,7 @@ export default function ServicesPage() {
         }
 
         // 1️⃣ Fetch all businesses and find one where ownerId === user.id
-        const businessRes = await axios.get("http://localhost:5001/business", {
+        const businessRes = await axios.get("http://3.230.169.3:5001/business", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -40,7 +40,7 @@ export default function ServicesPage() {
 
         // 2️⃣ Fetch services for that business
         const serviceRes = await axios.get(
-          `http://localhost:5001/business/${currentBusiness.b_id}/services`,
+          `http://3.230.169.3:5001/business/${currentBusiness.b_id}/services`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

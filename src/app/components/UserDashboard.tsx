@@ -19,7 +19,7 @@ const UserDashboard: React.FC = () => {
 
   const fetchBusinesses = async () => {
     try {
-      const res = await axios.get("http://localhost:5001/get-businesses");
+      const res = await axios.get("http://3.230.169.3:5001/get-businesses");
       setBusinesses(res.data.businesses);
     } catch (err) {
       console.error(err);

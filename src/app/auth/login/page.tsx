@@ -43,7 +43,7 @@ const handleLogin = async () => {
   if (!idToken) return alert("Please verify phone first");
   setLoading(true);
   try {
-    const res = await axios.post("http://localhost:5001/auth/login", {
+    const res = await axios.post("http://3.230.169.3:5001/auth/login", {
       phone,
       idToken,
     });
