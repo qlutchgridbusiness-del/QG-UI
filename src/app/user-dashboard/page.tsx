@@ -25,7 +25,7 @@ export default function UserHome() {
     const fetchServices = async () => {
       try {
         const res = await axios.get<Services[]>(
-          `http://localhost:5001/services?search=${search}`
+          `http://3.230.169.3:5001/services?search=${search}`
         );
         setServices(res.data);
         setFilteredServices(res.data); // initially show all

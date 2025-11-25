@@ -29,7 +29,7 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, setUserRole }) => {
   };
 
   const handleGetStarted = () => {
-    router.push("/login");
+    router.push("/auth/login");
   };
 
   const handleBookingsReceived = async () => {
@@ -42,7 +42,7 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, setUserRole }) => {
         return;
       }
 
-      const res = await axios.get("http://localhost:5001/bookings", {
+      const res = await axios.get("http://3.230.169.3:5001/bookings", {
         headers: { Authorization: `Bearer ${token}` },
       });
 

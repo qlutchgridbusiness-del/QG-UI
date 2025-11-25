@@ -1,5 +1,5 @@
 // lib/api.ts
-export const API_BASE = "http://localhost:5001";
+export const API_BASE = "http://3.230.169.3:5001";
 
 export async function apiGet(path: string, token?: string) {
   const res = await fetch(`${API_BASE}${path}`, {
