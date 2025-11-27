@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import {
-  auth,
   RecaptchaVerifier,
   signInWithPhoneNumber,
 } from "@/app/firebase/firebaseConfig";
@@ -22,12 +21,15 @@ export default function LoginPage() {
         { size: "invisible" }
       );
     }
-    const formattedPhone = `${phone}`;
+
+    const formatted = phone.startsWith("+91") ? phone : `+91${phone}`;
+
     const confirmation = await signInWithPhoneNumber(
       auth,
-      formattedPhone,
+      formatted,
       window.recaptchaVerifier
     );
+
     setConfirmationResult(confirmation);
     alert("OTP sent!");
   };
@@ -36,76 +38,63 @@ export default function LoginPage() {
     const result = await confirmationResult.confirm(otp);
     const token = await result.user.getIdToken();
     setIdToken(token);
-    alert("Phone verified!");
+    alert("Verification successful!");
   };
 
-const handleLogin = async () => {
-  if (!idToken) return alert("Please verify phone first");
-  setLoading(true);
-  try {
-    const res = await axios.post("http://3.230.169.3:5001/auth/login", {
-      phone,
-      idToken,
-    });
+  const handleLogin = async () => {
+    if (!idToken) return alert("Please verify phone first");
+    setLoading(true);
 
-    console.log("checklogindata", res.data);
-    // Store all data
-    localStorage.setItem("token", res.data.token);
-    localStorage.setItem("user", JSON.stringify(res.data.user));
-    localStorage.setItem("businessId", res.data.business?.id);
+    try {
+      const res = await axios.post("/auth/login", { phone, idToken });
 
-    const role = res.data.user.role;
-    localStorage.setItem("userRole", role);
-    localStorage.setItem("userEmail", res.data.user.email);
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+      localStorage.setItem("businessId", res.data.business?.id);
+      localStorage.setItem("userRole", res.data.user.role);
 
-    if (role === "business") {
-      window.location.href = "/business-dashboard";
-    } else {
-      window.location.href = "/user-dashboard";
+      window.location.href =
+        res.data.user.role === "business"
+          ? "/business-dashboard"
+          : "/user-dashboard";
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error("Login failed:", err);
-    alert("Login failed. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
-      <div className="bg-white shadow-2xl rounded-2xl p-8 w-full max-w-md border border-gray-200">
-        <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">
-          Login
-        </h2>
+    <div className="min-h-screen bg-gradient-to-br flex items-center justify-center px-4">
+      <div className="backdrop-blur-xl bg-white/10 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-white/20">
+        <h1 className="text-3xl font-bold text-white text-center mb-6">
+          Welcome Back
+        </h1>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <input
-            className="w-full p-3 border rounded-lg text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-400"
-            placeholder="Phone (10 digits)"
+            className="w-full p-3 rounded-xl bg-white/20 text-white placeholder-white/70
+                       border border-white/30 focus:ring-2 focus:ring-blue-300"
+            placeholder="Phone Number"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
           />
 
-          <div className="flex items-center justify-between">
-            <button
-              onClick={sendOtp}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold"
-            >
-              Send OTP
-            </button>
-            <div id="recaptcha-container"></div>
-          </div>
+          <button
+            onClick={sendOtp}
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold"
+          >
+            Send OTP
+          </button>
 
           <input
-            className="w-full p-3 border rounded-lg text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-green-400"
+            className="w-full p-3 rounded-xl bg-white/20 text-white placeholder-white/70 border border-white/30"
             placeholder="Enter OTP"
             value={otp}
             onChange={(e) => setOtp(e.target.value)}
           />
+
           <button
             onClick={verifyOtp}
-            className="bg-green-600 hover:bg-green-700 text-white w-full py-2 rounded-lg font-semibold"
+            className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold"
           >
             Verify OTP
           </button>
@@ -113,23 +102,22 @@ const handleLogin = async () => {
           <button
             onClick={handleLogin}
             disabled={loading}
-            className={`w-full py-3 rounded-lg text-white text-lg font-semibold ${
-              loading ? "bg-gray-400" : "bg-blue-700 hover:bg-blue-800"
+            className={`w-full py-3 rounded-xl text-white text-lg font-semibold ${
+              loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
             {loading ? "Logging in..." : "Login"}
           </button>
 
-          <p className="text-center text-gray-600 text-sm mt-3">
-            Don’t have an account?{" "}
-            <a
-              href="/auth/register"
-              className="text-blue-600 hover:underline font-medium"
-            >
-              Register here
+          <p className="text-center text-white/80 text-sm mt-3">
+            Don't have an account?{" "}
+            <a href="auth/register" className="text-white underline">
+              Register
             </a>
           </p>
         </div>
+
+        <div id="recaptcha-container"></div>
       </div>
     </div>
   );

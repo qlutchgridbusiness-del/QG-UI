@@ -1,0 +1,63 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+ext {
+    compileSdkVersion = 34
+    targetSdkVersion = 34
+    minSdkVersion = 22
+}
+
+buildscript {
+    
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.7.2'
+        classpath 'com.google.gms:google-services:4.4.2'
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+apply from: "variables.gradle"
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+subprojects { sub ->
+    afterEvaluate { project ->
+        if (project.hasProperty("android")) {
+
+            project.android.compileSdkVersion = rootProject.ext.compileSdkVersion
+
+            project.android.defaultConfig {
+                minSdkVersion rootProject.ext.minSdkVersion
+                targetSdkVersion rootProject.ext.targetSdkVersion
+            }
+
+            project.android.compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
+
+             try {
+                project.tasks.withType(JavaCompile).configureEach {
+                    javaCompiler = project.javaToolchains.compilerFor {
+                        languageVersion = JavaLanguageVersion.of(17)
+                    }
+                }
+            } catch (ignored) {}
+
+
+        }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

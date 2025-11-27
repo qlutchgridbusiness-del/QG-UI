@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">QlutchGrid</string>
+    <string name="title_activity_main">QlutchGrid</string>
+    <string name="package_name">com.amazetech.qlutchgrid</string>
+    <string name="custom_url_scheme">com.amazetech.qlutchgrid</string>
+</resources>
