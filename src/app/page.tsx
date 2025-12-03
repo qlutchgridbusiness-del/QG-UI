@@ -10,7 +10,7 @@ export default function HomePage() {
 
   const handleSearch = () => {
     if (search.trim()) {
-      router.push(`/user-dashboard?search=${search}`);
+      router.push(`/user-dashboard?search=${encodeURIComponent(search)}`);
     }
   };
 
@@ -18,21 +18,21 @@ export default function HomePage() {
     <div className="min-h-screen bg-white text-gray-900">
       {/* HERO SECTION */}
       <div className="relative h-[85vh] flex items-center justify-center">
-        {/* Background Image */}
         <Image
-          src="/hero-bg.png" // Replace with your image
+          src="/hero-bg.png"
           alt="Hero"
           fill
+          priority
           className="object-cover brightness-[0.45]"
         />
 
-        {/* Hero Text */}
-        <div className="relative z-10 text-center px-4">
+        {/* HERO CONTENT */}
+        <div className="relative z-10 text-center px-4 max-w-3xl">
           <motion.h1
-            className="text-5xl md:text-6xl font-extrabold text-white leading-tight drop-shadow-xl"
+            className="text-5xl md:text-6xl font-extrabold text-white drop-shadow-xl leading-tight"
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.7 }}
           >
             Services at Your Doorstep
           </motion.h1>
@@ -41,25 +41,25 @@ export default function HomePage() {
             className="text-lg md:text-2xl text-gray-200 mt-4 font-light"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
           >
             Car care, full service, painting & more — trusted experts in minutes.
           </motion.p>
 
-          {/* Search Bar */}
+          {/* SEARCH BAR */}
           <motion.div
             className="mt-8 flex justify-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
+            transition={{ delay: 0.4 }}
           >
-            <div className="bg-white shadow-xl rounded-full px-4 py-3 flex items-center w-[90%] md:w-[55%]">
+            <div className="bg-white shadow-lg md:shadow-xl rounded-full px-4 py-3 flex items-center w-[92%] md:w-[60%] border border-gray-100">
               <input
                 type="text"
                 placeholder="Search for services…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="flex-1 px-3 py-2 text-gray-700 outline-none text-lg"
+                className="flex-1 px-3 py-1.5 text-gray-700 outline-none text-lg"
               />
               <button
                 onClick={handleSearch}
@@ -68,6 +68,30 @@ export default function HomePage() {
                 Search
               </button>
             </div>
+          </motion.div>
+
+          {/* DASHBOARD BUTTONS */}
+          <motion.div
+            className="mt-10 flex flex-col md:flex-row gap-4 justify-center"
+            initial={{ opacity: 0, y: 25 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            {/* USER DASHBOARD */}
+            <button
+              onClick={() => router.push("/user-dashboard")}
+              className="px-8 py-4 bg-white text-gray-900 shadow-lg hover:shadow-xl rounded-xl font-semibold text-lg border border-gray-200 hover:bg-gray-100 transition"
+            >
+              Go to User Dashboard
+            </button>
+
+            {/* BUSINESS DASHBOARD */}
+            <button
+              onClick={() => router.push("/business-dashboard")}
+              className="px-8 py-4 bg-blue-600 text-white shadow-lg hover:bg-blue-700 hover:shadow-xl rounded-xl font-semibold text-lg transition"
+            >
+              Go to Business Dashboard
+            </button>
           </motion.div>
         </div>
       </div>
@@ -87,12 +111,17 @@ export default function HomePage() {
           ].map((c, i) => (
             <motion.div
               key={i}
-              className="bg-white rounded-xl shadow-lg p-4 cursor-pointer hover:shadow-2xl transition"
+              className="bg-white rounded-xl shadow-lg p-4 cursor-pointer hover:shadow-2xl transition group"
               whileHover={{ scale: 1.04 }}
               onClick={() => router.push(`/user-dashboard?search=${c.title}`)}
             >
-              <div className="relative h-32 w-full rounded-lg overflow-hidden mb-3">
-                <Image src={c.img} alt={c.title} fill className="object-cover" />
+              <div className="relative h-32 w-full rounded-lg overflow-hidden mb-3 bg-gray-100">
+                <Image
+                  src={c.img}
+                  alt={c.title}
+                  fill
+                  className="object-cover group-hover:scale-105 transition"
+                />
               </div>
               <h3 className="text-center font-semibold">{c.title}</h3>
             </motion.div>
@@ -101,7 +130,7 @@ export default function HomePage() {
       </section>
 
       {/* WHY CHOOSE US */}
-      <section className="py-20">
+      <section className="py-20 bg-white">
         <h2 className="text-3xl font-bold text-center mb-10">
           Why Choose QlutchGrid?
         </h2>
@@ -123,8 +152,8 @@ export default function HomePage() {
           ].map((box, i) => (
             <motion.div
               key={i}
-              className="p-6 rounded-xl bg-white shadow-lg hover:shadow-2xl transition"
-              whileHover={{ y: -4 }}
+              className="p-6 rounded-xl bg-white shadow-lg hover:shadow-2xl transition border border-gray-100"
+              whileHover={{ y: -5 }}
             >
               <h3 className="text-xl font-semibold mb-3">{box.title}</h3>
               <p className="text-gray-600">{box.desc}</p>

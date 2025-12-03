@@ -12,6 +12,7 @@
     "@capacitor/android": "^7.4.4",
     "@capacitor/cli": "^7.4.4",
     "@capacitor/core": "^7.4.4",
+    "@react-google-maps/api": "^2.20.7",
     "antd": "^5.14.0",
     "axios": "^1.13.2",
     "firebase": "^12.4.0",
