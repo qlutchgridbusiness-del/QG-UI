@@ -111,7 +111,7 @@ export default function LoginPage() {
 
           <p className="text-center text-white/80 text-sm mt-3">
             Don't have an account?{" "}
-            <a href="/register" className="text-white underline">
+            <a href="/auth/register" className="text-white underline">
               Register
             </a>
           </p>
