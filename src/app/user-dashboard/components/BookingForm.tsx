@@ -37,7 +37,7 @@ export default function BookingForm({ serviceId }: { serviceId: string }) {
     setError("");
 
     try {
-      const res = await fetch("http://3.230.169.3:5001/bookings", {
+      const res = await fetch("http://44.210.135.75:5001/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

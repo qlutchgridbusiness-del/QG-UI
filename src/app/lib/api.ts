@@ -1,5 +1,5 @@
 // app/lib/api.ts
-export const API_BASE = "http://3.230.169.3:5001";
+export const API_BASE = "http://44.210.135.75:5001";
 
 // Unified headers builder
 function buildHeaders(token?: string, isJson = true) {

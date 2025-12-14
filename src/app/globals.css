@@ -43,3 +43,14 @@ input, select, textarea {
 input::placeholder, textarea::placeholder {
   color: #666 !important;          /* dark placeholder */
 }
+
+@media (max-width: 768px) {
+  body {
+    background: none !important;
+  }
+
+  body::before {
+    display: none !important;
+  }
+}
+

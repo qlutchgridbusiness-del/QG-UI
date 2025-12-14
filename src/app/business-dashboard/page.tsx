@@ -128,7 +128,7 @@ export default function BusinessDashboard() {
       const token = localStorage.getItem("token");
       const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-      const businessRes = await axios.get("http://3.230.169.3:5001/business", {
+      const businessRes = await axios.get("http://44.210.135.75:5001/business", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -143,7 +143,7 @@ export default function BusinessDashboard() {
       }
 
       const orderRes = await axios.get(
-        `http://3.230.169.3:5001/orders/business/${currentBusiness.b_id}`,
+        `http://44.210.135.75:5001/orders/business/${currentBusiness.b_id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -198,7 +198,7 @@ export default function BusinessDashboard() {
                   ...order,
                   updateStatus: (status: any) => {
                     axios.put(
-                      `http://3.230.169.3:5001/orders/${order.id}/status`,
+                      `http://44.210.135.75:5001/orders/${order.id}/status`,
                       { status },
                       { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
                     );

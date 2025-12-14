@@ -25,7 +25,7 @@ export default function ServicesPage() {
         }
 
         // Fetch business
-        const businessRes = await axios.get("http://3.230.169.3:5001/business", {
+        const businessRes = await axios.get("http://44.210.135.75:5001/business", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -41,7 +41,7 @@ export default function ServicesPage() {
 
         // Fetch services
         const serviceRes = await axios.get(
-          `http://3.230.169.3:5001/business/${currentBusiness.b_id}/services`,
+          `http://44.210.135.75:5001/business/${currentBusiness.b_id}/services`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
