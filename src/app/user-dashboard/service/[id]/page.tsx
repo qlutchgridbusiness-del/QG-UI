@@ -16,7 +16,7 @@ export default function ServiceDetailsPage() {
       try {
         console.log("------------------------>", id);
 
-        const res = await fetch(`http://3.230.169.3:5001/services/${id}`);
+        const res = await fetch(`http://44.210.135.75:5001/services/${id}`);
         console.log("------------------------>", res);
         if (!res.ok) throw new Error("Service not found");
         const data = await res.json();

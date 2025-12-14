@@ -19,7 +19,7 @@ const BookingPage: React.FC = () => {
     const fetchServices = async () => {
     try {
       const res = await axios.get(
-        `http://3.230.169.3:5001/get-business-services?email=${businessEmail}`
+        `http://44.210.135.75:5001/get-business-services?email=${businessEmail}`
       );
       const sortedServices: Service[] = res.data.services.sort((a: Service, b: Service) =>
         a.available === b.available ? 0 : a.available ? -1 : 1
