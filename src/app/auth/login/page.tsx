@@ -109,9 +109,9 @@ export default function LoginPage() {
             {loading ? "Logging in..." : "Login"}
           </button>
 
-          <p className="text-center text-white/80 text-sm mt-3">
+          <p className="text-center text-sm mt-3">
             Don't have an account?{" "}
-            <a href="/auth/register" className="text-white underline">
+            <a href="/auth/register" className="underline">
               Register
             </a>
           </p>
