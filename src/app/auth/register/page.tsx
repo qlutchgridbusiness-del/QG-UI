@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
 import { apiPost, apiGet } from "@/app/lib/api"; // your file earlier
-// If you used axios or direct fetch, swap accordingly.
+import { UploadCard } from "@/app/business-dashboard/components/UploadCard";
 
 type ServiceRow = {
   id: string;
@@ -17,20 +17,33 @@ type BusinessPayload = {
   name: string;
   phone: string;
   email?: string;
-  category?: string;
+  category?: string[];
   address?: string;
   latitude?: string;
   longitude?: string;
   pancard?: string;
   aadhaarCard?: string;
   gst?: string;
-  openingHours?: any; // shape { mon: {open:true, from:"09:00", to:"18:00"}, ...}
+  openingHours?: object; // shape { mon: {open:true, from:"09:00", to:"18:00"}, ...}
   logoKey?: string | null;
   coverKey?: string | null;
+
+  // UI-only previews
+  pancardPreview?: string;
+  aadhaarCardPreview?: string;
+  logoKeyPreview?: string;
+  coverKeyPreview?: string;
 };
 
 const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 const GOOGLE_KEY = process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY || "";
+const CATEGORIES = [
+  "Garage / Mechanic",
+  "Painting",
+  "Full service",
+  "Accident repair",
+  "Detailing",
+];
 
 function uid(prefix = "") {
   return prefix + Math.random().toString(36).slice(2, 9);
@@ -91,7 +104,7 @@ export default function BusinessRegisterPage() {
             name: "",
             phone: "",
             email: "",
-            category: "",
+            category: [],
             address: "",
             latitude: "",
             longitude: "",
@@ -255,14 +268,49 @@ export default function BusinessRegisterPage() {
   function removeService(id: string) {
     setServices((list) => list.filter((r) => r.id !== id));
   }
-  async function uploadFileFake(file: File): Promise<string> {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        resolve(reader.result as string); // base64 preview URL
-      };
-      reader.readAsDataURL(file);
-    });
+  function maskPan(pan: string) {
+    if (pan.length < 5) return pan;
+    return pan.slice(0, 2) + "XXXXX" + pan.slice(-2);
+  }
+
+  function maskAadhaar(aadhaar: string) {
+    const digits = aadhaar.replace(/\s+/g, "");
+    if (digits.length < 4) return aadhaar;
+    return "XXXX XXXX " + digits.slice(-4);
+  }
+
+  async function handleUseCurrentLocation() {
+    if (!navigator.geolocation) {
+      alert("Location not supported");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+
+        try {
+          const res = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_KEY}`
+          );
+          const data = await res.json();
+
+          updatePayload({
+            address: data.results?.[0]?.formatted_address || "Current location",
+            latitude: String(lat),
+            longitude: String(lng),
+          });
+        } catch {
+          updatePayload({
+            address: "Current location",
+            latitude: String(lat),
+            longitude: String(lng),
+          });
+        }
+      },
+      () => alert("Unable to fetch location")
+    );
   }
 
   async function handleFileUpload(
@@ -284,8 +332,14 @@ export default function BusinessRegisterPage() {
     console.log(`TEMP uploaded for ${field}:`, previewUrl);
   }
 
-  /* ---------- Final submit ---------- */
   async function submitAll() {
+    const hasValidService = services.some((s) => s.name?.trim());
+
+    if (!hasValidService) {
+      alert("Please add at least one service");
+      return;
+    }
+
     setSubmitting(true);
     try {
       // 1) create business (if not created)
@@ -334,7 +388,7 @@ export default function BusinessRegisterPage() {
       <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
         <div className="grid grid-cols-12">
           {/* left visual panel */}
-          <div className="col-span-12 lg:col-span-4 bg-gradient-to-b from-indigo-600 via-purple-600 to-pink-600 text-white p-8 bg-white/95 backdrop-blur rounded-xl">
+          <div className="col-span-12 lg:col-span-4 hidden lg:block bg-gradient-to-b from-indigo-600 via-purple-600 to-pink-600 text-white p-8 bg-white/95 backdrop-blur rounded-xl">
             <div className="space-y-6">
               <h2 className="text-2xl font-bold">Business Onboarding</h2>
               <p className="text-sm opacity-90">
@@ -407,186 +461,370 @@ export default function BusinessRegisterPage() {
               {step === 1 && (
                 <section className="space-y-4">
                   <h4 className="text-xl font-bold">Business basics</h4>
-                  <div className="grid grid-cols-2 gap-4">
+
+                  {/* Mobile: 1 col | Desktop: 2 col */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
                       value={payload.name || ""}
                       onChange={(e) => updatePayload({ name: e.target.value })}
                       placeholder="Business name"
-                      className="w-full p-3 border border-gray-300 rounded-lg 
-             text-gray-900 placeholder-gray-500 focus:ring-2 
-             focus:ring-indigo-500 outline-none"
+                      className="w-full p-3 border border-gray-300 rounded-lg
+          text-gray-900 placeholder-gray-500
+          focus:ring-2 focus:ring-indigo-500 outline-none"
                     />
+
                     <input
                       value={payload.phone || ""}
                       onChange={(e) => updatePayload({ phone: e.target.value })}
                       placeholder="Phone"
-                      className="w-full p-3 border border-gray-300 rounded-lg 
-             text-gray-900 placeholder-gray-500 focus:ring-2 
-             focus:ring-indigo-500 outline-none"
+                      className="w-full p-3 border border-gray-300 rounded-lg
+          text-gray-900 placeholder-gray-500
+          focus:ring-2 focus:ring-indigo-500 outline-none"
                     />
+
                     <input
                       value={payload.email || ""}
                       onChange={(e) => updatePayload({ email: e.target.value })}
                       placeholder="Email"
-                      className="w-full p-3 border border-gray-300 rounded-lg 
-             text-gray-900 placeholder-gray-500 focus:ring-2 
-             focus:ring-indigo-500 outline-none"
+                      className="w-full p-3 border border-gray-300 rounded-lg
+          text-gray-900 placeholder-gray-500
+          focus:ring-2 focus:ring-indigo-500 outline-none"
                     />
-                    <select
-                      value={payload.category || ""}
-                      onChange={(e) =>
-                        updatePayload({ category: e.target.value })
-                      }
-                      className="w-full p-3 border border-gray-300 rounded-lg 
-             text-gray-900 placeholder-gray-500 focus:ring-2 
-             focus:ring-indigo-500 outline-none"
-                    >
-                      <option value="">Select category</option>
-                      <option>Garage / Mechanic</option>
-                      <option>Painting</option>
-                      <option>Full service</option>
-                      <option>Accident repair</option>
-                      <option>Detailing</option>
-                    </select>
 
-                    <div className="col-span-2">
-                      <label className="text-sm block mb-2">
-                        Address (Google autocomplete available)
+                    <div className="md:col-span-2">
+                      <label className="text-sm font-medium mb-2 block">
+                        Select services offered
                       </label>
-                      <input
-                        ref={addressRef}
-                        value={payload.address || ""}
-                        onChange={(e) =>
-                          updatePayload({ address: e.target.value })
-                        }
-                        placeholder="Start typing address..."
-                        className="w-full w-full p-3 border border-gray-300 rounded-lg 
-             text-gray-900 placeholder-gray-500 focus:ring-2 
-             focus:ring-indigo-500 outline-none"
-                      />
-                      <div className="text-xs text-gray-500 mt-1">
-                        Lat: {payload.latitude} • Lng: {payload.longitude}
+
+                      <div className="flex flex-wrap gap-3">
+                        {CATEGORIES.map((cat) => {
+                          const selected = payload.category?.includes(cat);
+
+                          return (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => {
+                                const current = payload.category || [];
+                                const updated = selected
+                                  ? current.filter((c) => c !== cat)
+                                  : [...current, cat];
+
+                                updatePayload({ category: updated });
+                              }}
+                              className={`
+            px-4 py-2 rounded-full border text-sm transition
+            ${
+              selected
+                ? "bg-indigo-600 text-white border-indigo-600"
+                : "bg-white text-gray-700 border-gray-300 hover:border-indigo-400"
+            }
+          `}
+                            >
+                              {cat}
+                            </button>
+                          );
+                        })}
                       </div>
+
+                      <p className="text-xs text-gray-500 mt-2">
+                        You can select multiple categories
+                      </p>
+                    </div>
+
+                    {/* Address always full width */}
+                    <div className="md:col-span-2 space-y-2">
+                      <label className="text-sm font-medium block">
+                        Business location
+                      </label>
+
+                      <div className="relative">
+                        <input
+                          ref={addressRef}
+                          value={payload.address || ""}
+                          onChange={(e) =>
+                            updatePayload({ address: e.target.value })
+                          }
+                          placeholder="Search area, street, landmark…"
+                          className="w-full p-3 pl-10 border border-gray-300 rounded-lg
+        text-gray-900 placeholder-gray-500
+        focus:ring-2 focus:ring-indigo-500 outline-none"
+                        />
+
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                          🔍
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleUseCurrentLocation}
+                        className="text-sm text-indigo-600 hover:underline flex items-center gap-2"
+                      >
+                        📍 Use my current location
+                      </button>
                     </div>
                   </div>
                 </section>
               )}
 
               {step === 2 && (
-                <section className="space-y-4">
-                  <h4 className="text-xl font-bold">KYC</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <input
-                      value={payload.pancard || ""}
-                      onChange={(e) =>
-                        updatePayload({ pancard: e.target.value })
-                      }
-                      placeholder="PAN"
-                      className="w-full p-3 border border-gray-300 rounded-lg 
-             text-gray-900 placeholder-gray-500 focus:ring-2 
-             focus:ring-indigo-500 outline-none"
-                    />
-                    <input
-                      value={payload.gst || ""}
-                      onChange={(e) => updatePayload({ gst: e.target.value })}
-                      placeholder="GST ID"
-                      className="w-full p-3 border border-gray-300 rounded-lg 
-             text-gray-900 placeholder-gray-500 focus:ring-2 
-             focus:ring-indigo-500 outline-none"
-                    />
-                    <input
-                      value={payload.aadhaarCard || ""}
-                      onChange={(e) =>
-                        updatePayload({ aadhaarCard: e.target.value })
-                      }
-                      placeholder="Aadhaar"
-                      className="w-full p-3 border border-gray-300 rounded-lg 
-             text-gray-900 placeholder-gray-500 focus:ring-2 
-             focus:ring-indigo-500 outline-none"
-                    />
+                <section className="space-y-6">
+                  <h4 className="text-xl font-bold">KYC Verification</h4>
 
-                    <div className="col-span-2 grid grid-cols-2 gap-4">
-                      <label className="flex flex-col">
-                        <span className="text-sm mb-1">Upload PAN image</span>
-                        <input
-                          type="file"
-                          accept="image/*,application/pdf"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleFileUpload(file, "pancard");
-                          }}
-                        />
-                      </label>
+                  {/* Inputs */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm mb-1 block">PAN Number</label>
+                      <input
+                        value={payload.pancard || ""}
+                        onChange={(e) =>
+                          updatePayload({
+                            pancard: e.target.value.toUpperCase(),
+                          })
+                        }
+                        placeholder="ABCDE1234F"
+                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      />
+                      {payload.pancard && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Stored as: {maskPan(payload.pancard)}
+                        </p>
+                      )}
+                    </div>
 
-                      <label className="flex flex-col">
-                        <span className="text-sm mb-1">
-                          Upload Aadhaar (front/back)
-                        </span>
-                        <input
-                          type="file"
-                          accept="image/*,application/pdf"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleFileUpload(file, "aadhaarCard");
-                          }}
-                        />
+                    <div>
+                      <label className="text-sm mb-1 block">
+                        GST ID (optional)
                       </label>
+                      <input
+                        value={payload.gst || ""}
+                        onChange={(e) => updatePayload({ gst: e.target.value })}
+                        placeholder="22AAAAA0000A1Z5"
+                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="text-sm mb-1 block">
+                        Aadhaar Number
+                      </label>
+                      <input
+                        value={payload.aadhaarCard || ""}
+                        onChange={(e) =>
+                          updatePayload({ aadhaarCard: e.target.value })
+                        }
+                        placeholder="XXXX XXXX 1234"
+                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      />
+                      {payload.aadhaarCard && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Stored as: {maskAadhaar(payload.aadhaarCard)}
+                        </p>
+                      )}
                     </div>
                   </div>
+
+                  {/* Uploads */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <UploadCard
+                      label="PAN Card Image"
+                      preview={(payload as any).pancardPreview}
+                      onUpload={(file) => handleFileUpload(file, "pancard")}
+                    />
+
+                    <UploadCard
+                      label="Aadhaar Image (Front / Back)"
+                      preview={(payload as any).aadhaarCardPreview}
+                      onUpload={(file) => handleFileUpload(file, "aadhaarCard")}
+                    />
+                  </div>
+
+                  <p className="text-xs text-gray-500 text-center">
+                    🔒 Your documents are encrypted and used only for
+                    verification
+                  </p>
                 </section>
               )}
 
               {step === 3 && (
-                <section className="space-y-4">
-                  <h4 className="text-xl font-bold">Operating hours</h4>
-                  <div className="grid gap-2">
+                <section className="space-y-6">
+                  <h4 className="text-xl font-bold">Operating Hours</h4>
+
+                  {/* DAY SELECTOR */}
+                  <div>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Select working days
+                    </p>
+
+                    <div className="flex flex-wrap gap-2">
+                      {DAYS.map((d) => {
+                        const isOpen = payload.openingHours?.[d]?.open;
+
+                        return (
+                          <button
+                            key={d}
+                            type="button"
+                            onClick={() => {
+                              const updated = {
+                                ...payload.openingHours,
+                                [d]: {
+                                  ...(payload.openingHours?.[d] || {}),
+                                  open: !isOpen,
+                                  from:
+                                    payload.openingHours?.[d]?.from || "09:00",
+                                  to: payload.openingHours?.[d]?.to || "18:00",
+                                },
+                              };
+                              updatePayload({ openingHours: updated });
+                            }}
+                            className={`
+                px-4 py-2 rounded-full text-sm font-medium border transition
+                ${
+                  isOpen
+                    ? "bg-indigo-600 text-white border-indigo-600"
+                    : "bg-white text-gray-700 border-gray-300"
+                }
+              `}
+                          >
+                            {d.toUpperCase()}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* WEEKDAY QUICK SET */}
+                  <div className="bg-gray-50 p-4 rounded-xl border">
+                    <p className="text-sm font-medium mb-3">
+                      Weekday timing (Mon–Fri)
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row gap-3 min-w-0">
+                      <input
+                        type="time"
+                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        onChange={(e) => {
+                          const updated = { ...payload.openingHours };
+                          ["mon", "tue", "wed", "thu", "fri"].forEach((d) => {
+                            if (updated[d]?.open) {
+                              updated[d] = {
+                                ...updated[d],
+                                from: e.target.value,
+                              };
+                            }
+                          });
+                          updatePayload({ openingHours: updated });
+                        }}
+                      />
+
+                      <input
+                        type="time"
+                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        onChange={(e) => {
+                          const updated = { ...payload.openingHours };
+                          ["mon", "tue", "wed", "thu", "fri"].forEach((d) => {
+                            if (updated[d]?.open) {
+                              updated[d] = {
+                                ...updated[d],
+                                to: e.target.value,
+                              };
+                            }
+                          });
+                          updatePayload({ openingHours: updated });
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* WEEKEND QUICK SET */}
+                  <div className="bg-gray-50 p-4 rounded-xl border">
+                    <p className="text-sm font-medium mb-3">
+                      Weekend timing (Sat–Sun)
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row gap-3 min-w-0">
+                      <input
+                        type="time"
+                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        onChange={(e) => {
+                          const updated = { ...payload.openingHours };
+                          ["sat", "sun"].forEach((d) => {
+                            if (updated[d]?.open) {
+                              updated[d] = {
+                                ...updated[d],
+                                from: e.target.value,
+                              };
+                            }
+                          });
+                          updatePayload({ openingHours: updated });
+                        }}
+                      />
+
+                      <input
+                        type="time"
+                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        onChange={(e) => {
+                          const updated = { ...payload.openingHours };
+                          ["sat", "sun"].forEach((d) => {
+                            if (updated[d]?.open) {
+                              updated[d] = {
+                                ...updated[d],
+                                to: e.target.value,
+                              };
+                            }
+                          });
+                          updatePayload({ openingHours: updated });
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* PER-DAY OVERRIDE */}
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium text-gray-700">
+                      Fine-tune per day (optional)
+                    </p>
+
                     {DAYS.map((d) => {
-                      const day = (payload.openingHours || {})[d] || {
-                        open: false,
-                        from: "09:00",
-                        to: "18:00",
-                      };
+                      const day = payload.openingHours?.[d];
+                      if (!day?.open) return null;
+
                       return (
-                        <div key={d} className="flex items-center gap-4">
-                          <div className="w-20 capitalize">{d}</div>
-                          <label className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={day.open}
-                              onChange={(e) => {
-                                const oh = {
-                                  ...payload.openingHours,
-                                  [d]: { ...day, open: e.target.checked },
-                                };
-                                updatePayload({ openingHours: oh });
-                              }}
-                            />
-                            Open
-                          </label>
+                        <div
+                          key={d}
+                          className="flex flex-col sm:flex-row gap-3 items-center border p-3 rounded-lg min-w-0"
+                        >
+                          <div className="w-full sm:w-20 font-semibold uppercase text-sm">
+                            {d}
+                          </div>
+
                           <input
                             type="time"
                             value={day.from}
                             onChange={(e) => {
-                              const oh = {
-                                ...payload.openingHours,
-                                [d]: { ...day, from: e.target.value },
-                              };
-                              updatePayload({ openingHours: oh });
+                              updatePayload({
+                                openingHours: {
+                                  ...payload.openingHours,
+                                  [d]: { ...day, from: e.target.value },
+                                },
+                              });
                             }}
-                            className="p-2 border rounded"
+                            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
                           />
-                          <span>—</span>
+
                           <input
                             type="time"
                             value={day.to}
                             onChange={(e) => {
-                              const oh = {
-                                ...payload.openingHours,
-                                [d]: { ...day, to: e.target.value },
-                              };
-                              updatePayload({ openingHours: oh });
+                              updatePayload({
+                                openingHours: {
+                                  ...payload.openingHours,
+                                  [d]: { ...day, to: e.target.value },
+                                },
+                              });
                             }}
-                            className="p-2 border rounded"
+                            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
                           />
                         </div>
                       );
@@ -596,77 +834,162 @@ export default function BusinessRegisterPage() {
               )}
 
               {step === 4 && (
-                <section className="space-y-4">
-                  <h4 className="text-xl font-bold">Media & Branding</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm mb-2">
-                        Logo (square)
-                      </label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={async (e) => {
-                          const f = e.target.files?.[0];
-                          if (f) await handleFileUpload(f, "logoKey");
-                        }}
-                      />
-                      {(payload as any).logoKeyPreview && (
-                        <img
-                          src={(payload as any).logoKeyPreview}
-                          alt="logo"
-                          className="mt-3 w-28 h-28 object-cover rounded"
-                        />
+                <section className="space-y-6">
+                  <h4 className="text-xl font-bold">Logo & Cover Image</h4>
+                  <p className="text-sm text-gray-600">
+                    Upload your brand logo and a cover image. These will be
+                    visible to users while browsing your business.
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* LOGO */}
+                    <div className="border rounded-xl p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h5 className="font-semibold">Business Logo</h5>
+                        <span className="text-xs text-gray-500">
+                          Square image
+                        </span>
+                      </div>
+
+                      {!(payload as any).logoKeyPreview ? (
+                        <div className="border-2 border-dashed rounded-lg p-6 text-center">
+                          <p className="text-sm text-gray-600">
+                            Upload your business logo
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Recommended size: 500 × 500 • JPG / PNG
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="flex justify-center">
+                          <img
+                            src={(payload as any).logoKeyPreview}
+                            alt="Logo preview"
+                            className="w-32 h-32 object-cover rounded-lg border"
+                          />
+                        </div>
                       )}
-                    </div>
-                    <div>
-                      <label className="block text-sm mb-2">
-                        Cover image (wide)
+
+                      <label className="block">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleFileUpload(file, "logoKey");
+                          }}
+                        />
+                        <div className="mt-2 text-center">
+                          <button
+                            type="button"
+                            className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50"
+                          >
+                            {(payload as any).logoKeyPreview
+                              ? "Change Logo"
+                              : "Upload Logo"}
+                          </button>
+                        </div>
                       </label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={async (e) => {
-                          const f = e.target.files?.[0];
-                          if (f) await handleFileUpload(f, "coverKey");
-                        }}
-                      />
-                      {(payload as any).coverKeyPreview && (
+                    </div>
+
+                    {/* COVER IMAGE */}
+                    <div className="border rounded-xl p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h5 className="font-semibold">Cover Image</h5>
+                        <span className="text-xs text-gray-500">
+                          Wide image
+                        </span>
+                      </div>
+
+                      {!(payload as any).coverKeyPreview ? (
+                        <div className="border-2 border-dashed rounded-lg p-6 text-center">
+                          <p className="text-sm text-gray-600">
+                            Upload a cover image for your business
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Recommended size: 1200 × 400 • JPG / PNG
+                          </p>
+                        </div>
+                      ) : (
                         <img
                           src={(payload as any).coverKeyPreview}
-                          alt="cover"
-                          className="mt-3 w-full h-28 object-cover rounded"
+                          alt="Cover preview"
+                          className="w-full h-40 object-cover rounded-lg border"
                         />
                       )}
+
+                      <label className="block">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleFileUpload(file, "coverKey");
+                          }}
+                        />
+                        <div className="mt-2 text-center">
+                          <button
+                            type="button"
+                            className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50"
+                          >
+                            {(payload as any).coverKeyPreview
+                              ? "Change Cover Image"
+                              : "Upload Cover Image"}
+                          </button>
+                        </div>
+                      </label>
                     </div>
                   </div>
                 </section>
               )}
 
               {step === 5 && (
-                <section className="space-y-4">
-                  <h4 className="text-xl font-bold">Add Services</h4>
-                  <div className="space-y-4">
-                    {services.map((s) => (
-                      <div key={s.id} className="p-4 border rounded-lg">
-                        <div className="flex gap-3 items-center">
-                          <input
-                            value={s.name}
-                            onChange={(e) =>
-                              updateService(s.id, { name: e.target.value })
-                            }
-                            placeholder="Service name (e.g., Full Service)"
-                            className="flex-1 p-2 border rounded"
-                          />
+                <section className="space-y-6">
+                  <div>
+                    <h4 className="text-xl font-bold">Services you offer</h4>
+                    <p className="text-sm text-gray-500">
+                      Add at least one service so customers can book you
+                    </p>
+                  </div>
+
+                  <div className="space-y-5">
+                    {services.map((s, index) => (
+                      <div
+                        key={s.id}
+                        className="border rounded-xl p-4 space-y-4 bg-gray-50"
+                      >
+                        {/* Header */}
+                        <div className="flex items-center justify-between">
+                          <div className="font-semibold text-gray-700">
+                            Service {index + 1}
+                          </div>
                           <button
                             onClick={() => removeService(s.id)}
-                            className="text-red-500"
+                            className="text-sm text-red-600 hover:underline"
                           >
                             Remove
                           </button>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-3 mt-3">
+                        {/* Service name */}
+                        <input
+                          value={s.name}
+                          onChange={(e) =>
+                            updateService(s.id, { name: e.target.value })
+                          }
+                          placeholder="Service name (e.g. Full Service)"
+                          className="w-full p-3 border rounded-lg"
+                        />
+
+                        {/* Pricing */}
+                        <div className="space-y-2">
+                          <div className="text-sm font-medium text-gray-600">
+                            Pricing
+                          </div>
+
+                          {/* Fixed price */}
                           <input
                             value={s.price ?? ""}
                             onChange={(e) => {
@@ -681,10 +1004,11 @@ export default function BusinessRegisterPage() {
                               });
                             }}
                             placeholder="Fixed price (₹)"
-                            className="p-2 border rounded"
+                            className="w-full p-3 border rounded-lg"
                           />
 
-                          <div className="flex gap-2">
+                          {/* OR range */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <input
                               value={s.minPrice ?? ""}
                               onChange={(e) => {
@@ -697,9 +1021,10 @@ export default function BusinessRegisterPage() {
                                   price: null,
                                 });
                               }}
-                              placeholder="Min price"
-                              className="p-2 border rounded"
+                              placeholder="Min price (₹)"
+                              className="p-3 border rounded-lg"
                             />
+
                             <input
                               value={s.maxPrice ?? ""}
                               onChange={(e) => {
@@ -712,11 +1037,14 @@ export default function BusinessRegisterPage() {
                                   price: null,
                                 });
                               }}
-                              placeholder="Max price"
-                              className="p-2 border rounded"
+                              placeholder="Max price (₹)"
+                              className="p-3 border rounded-lg"
                             />
                           </div>
+                        </div>
 
+                        {/* Duration + availability */}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                           <input
                             value={String(s.durationMinutes)}
                             onChange={(e) =>
@@ -724,13 +1052,11 @@ export default function BusinessRegisterPage() {
                                 durationMinutes: Number(e.target.value),
                               })
                             }
-                            placeholder="Duration (mins)"
-                            className="p-2 border rounded"
+                            placeholder="Duration (minutes)"
+                            className="w-full sm:w-48 p-3 border rounded-lg"
                           />
-                        </div>
 
-                        <div className="mt-3 flex items-center gap-3 text-sm">
-                          <label className="flex items-center gap-2">
+                          <label className="flex items-center gap-2 text-sm">
                             <input
                               type="checkbox"
                               checked={s.available}
@@ -740,70 +1066,94 @@ export default function BusinessRegisterPage() {
                                 })
                               }
                             />
-                            Available
+                            Available for booking
                           </label>
                         </div>
                       </div>
                     ))}
-
-                    <button
-                      onClick={addService}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded"
-                    >
-                      + Add another service
-                    </button>
                   </div>
+
+                  {/* Add service */}
+                  <button
+                    onClick={addService}
+                    className="
+        w-full
+        py-3
+        border-2 border-dashed
+        border-indigo-400
+        text-indigo-600
+        rounded-xl
+        hover:bg-indigo-50
+        font-medium
+      "
+                  >
+                    + Add another service
+                  </button>
                 </section>
               )}
 
               {/* navigation */}
-              <div className="flex items-center justify-between py-4">
-                <div>
+              <div className="pt-6 border-t mt-8">
+                <div className="flex flex-col sm:flex-row gap-3 sm:justify-between">
+                  {/* Back */}
                   {step > 1 && (
                     <button
                       onClick={prev}
-                      className="px-4 py-2 border rounded mr-3"
+                      className="w-full sm:w-auto px-5 py-3 border rounded-lg text-gray-700"
                     >
                       Back
                     </button>
                   )}
-                  {step < 5 && (
-                    <button
-                      onClick={next}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded"
-                    >
-                      Next
-                    </button>
-                  )}
-                </div>
 
-                <div>
-                  {step === 5 ? (
-                    <button
-                      onClick={submitAll}
-                      disabled={submitting}
-                      className="px-6 py-2 bg-green-600 text-white rounded"
-                    >
-                      {submitting ? "Submitting..." : "Finish & Publish"}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        localStorage.setItem(
-                          "business:register",
-                          JSON.stringify(payload)
-                        );
-                        localStorage.setItem(
-                          "business:services",
-                          JSON.stringify(services)
-                        );
-                        alert("Saved locally");
-                      }}
-                      className="px-4 py-2 border rounded"
-                    >
-                      Save draft
-                    </button>
-                  )}
+                  <div className="flex flex-col sm:flex-row gap-3 sm:ml-auto">
+                    {/* Save draft – ONLY for steps 1–4 */}
+                    {step < 5 && (
+                      <button
+                        onClick={() => {
+                          localStorage.setItem(
+                            "business:register",
+                            JSON.stringify(payload)
+                          );
+                          localStorage.setItem(
+                            "business:services",
+                            JSON.stringify(services)
+                          );
+                          alert("Draft saved locally");
+                        }}
+                        className="w-full sm:w-auto px-5 py-3 border rounded-lg text-gray-700"
+                      >
+                        Save draft
+                      </button>
+                    )}
+
+                    {/* Next – ONLY for steps 1–4 */}
+                    {step < 5 && (
+                      <button
+                        onClick={next}
+                        className="w-full sm:w-auto px-6 py-3 rounded-lg bg-indigo-600 text-white font-semibold"
+                      >
+                        Next
+                      </button>
+                    )}
+
+                    {/* Publish – ONLY for step 5 */}
+                    {step === 5 && (
+                      <button
+                        onClick={submitAll}
+                        disabled={submitting}
+                        className={`
+            w-full sm:w-auto px-6 py-3 rounded-lg text-white font-semibold
+            ${
+              submitting
+                ? "bg-green-400 cursor-not-allowed"
+                : "bg-green-600 hover:bg-green-700"
+            }
+          `}
+                      >
+                        {submitting ? "Publishing..." : "Finish & Publish"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
