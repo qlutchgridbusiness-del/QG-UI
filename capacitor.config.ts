@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'QlutchGrid',
   webDir: ".next",
   server: {
-    url: 'http://98.92.68.89:3000/', // e.g., your deployed Next.js site
+    url: 'http://13.223.188.185:3000/', // e.g., your deployed Next.js site
     cleartext: true
   }
 };
