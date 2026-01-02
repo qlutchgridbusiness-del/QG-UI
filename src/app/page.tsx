@@ -63,7 +63,7 @@ export default function HomePage() {
               />
               <button
                 onClick={handleSearch}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-full transition"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-2 rounded-full transition"
               >
                 Search
               </button>

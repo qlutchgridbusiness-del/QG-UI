@@ -62,27 +62,33 @@ export default function Navbar() {
                   className="absolute right-0 mt-3 bg-white text-gray-800 w-52 rounded-xl shadow-xl border border-gray-100 p-2 z-50"
                 >
                   {/* User Role Menus */}
-                  {role === "user" && (
-                    <>
-                      <Link
-                        href="/user-dashboard"
-                        className="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm"
-                        onClick={() => setDropdownOpen(false)}
-                      >
-                        User Dashboard
-                      </Link>
-                      <Link
+                  {/* {role === "user" && ( */}
+                  <>
+                    <Link
+                      href="/user-dashboard"
+                      className="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      User Dashboard
+                    </Link>
+                    {/* <Link
                         href="/user-dashboard/bookings"
                         className="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm"
                         onClick={() => setDropdownOpen(false)}
                       >
                         My Bookings
-                      </Link>
-                    </>
-                  )}
+                      </Link> */}
+                    <Link
+                      href="/user-dashboard/orders"
+                      className="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm"
+                    >
+                      My Orders
+                    </Link>
+                  </>
+                  {/* )} */}
 
-                  {role === "business" && (
-                    <>
+                  {/* {role === "business" && ( */}
+                  {/* <>
                       <Link
                         href="/business-dashboard"
                         className="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm"
@@ -98,8 +104,8 @@ export default function Navbar() {
                       >
                         Bookings Received
                       </Link>
-                    </>
-                  )}
+                    </> */}
+                  {/* )} */}
 
                   {/* Divider */}
                   <div className="my-1 border-t border-gray-200"></div>

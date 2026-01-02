@@ -1,88 +1,116 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import BusinessCard from "./components/BusinessCard";
 
-export interface Services {
-  id: string;
-  name: string;
-  price: number;
-  durationMinutes: number;
-  available: boolean;
-  business: any;
-  bookings: any[];
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { services } from "../data/mockData";
 
-export default function UserHome() {
-  const [services, setServices] = useState<Services[]>([]);
-  const [filteredServices, setFilteredServices] = useState<Services[]>([]);
-  const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
+export default function UserDashboard() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get("search") || "";
 
-  useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        const res = await axios.get<Services[]>(
-          `http://44.210.135.75:5001/services?search=${search}`
-        );
-        setServices(res.data);
-        setFilteredServices(res.data); // initially show all
-      } catch (err) {
-        console.error("Error fetching businesses:", err);
-        setError("❌ Failed to load businesses. Please try again later.");
-      }
-    };
+  const [query, setQuery] = useState(initialSearch);
+  const [category, setCategory] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
 
-    fetchServices();
-  }, []);
+  const filteredServices = services.filter((s) => {
+    const matchesQuery =
+      s.name.toLowerCase().includes(query.toLowerCase()) ||
+      s.business.name.toLowerCase().includes(query.toLowerCase());
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearch(value);
+    const matchesCategory = !category || s.category === category;
 
-    if (value.trim() === "") {
-      setFilteredServices(services);
-    } else {
-      const filtered = services.filter((svc) =>
-        `${svc.name} ${svc.business?.name}`
-          .toLowerCase()
-          .includes(value.toLowerCase())
-      );
-      setFilteredServices(filtered);
-    }
-  };
+    const matchesMin = !minPrice || s.price >= Number(minPrice);
+    const matchesMax = !maxPrice || s.price <= Number(maxPrice);
+
+    return matchesQuery && matchesCategory && matchesMin && matchesMax;
+  });
 
   return (
-    <div className="p-6 min-h-screen bg-gray-50">
-      <h1 className="text-2xl font-semibold mb-6 text-gray-800">
-        Explore all and book your services 🚗
+    <div className="max-w-6xl mx-auto px-4">
+      <h1 className="text-3xl font-bold mb-6 text-white">
+        Find Services Near You
       </h1>
-      <div className="mb-10 flex justify-center">
-        <input
-          type="text"
-          placeholder="Search for services or businesses..."
-          value={search}
-          onChange={handleSearch}
-          className="w-full max-w-2xl p-3 rounded-xl border border-gray-300 shadow-sm 
-                       focus:ring-2 focus:ring-blue-400 outline-none text-gray-700 placeholder-gray-400"
-        />
+
+      {/* FILTER BAR */}
+      <div className="bg-white rounded-xl shadow p-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+          {/* SEARCH */}
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search services like water wash, car service..."
+            className="border rounded-lg px-4 py-2 text-gray-800"
+          />
+
+          {/* CATEGORY */}
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="border rounded-lg px-4 py-2 text-gray-800"
+          >
+            <option value="">All Categories</option>
+            <option value="Car Care">Car Care</option>
+            <option value="Maintenance">Maintenance</option>
+            <option value="Body Work">Body Work</option>
+          </select>
+
+          {/* MIN PRICE */}
+          <input
+            type="number"
+            placeholder="Min ₹"
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+            className="border rounded-lg px-4 py-2 text-gray-800"
+          />
+
+          {/* MAX PRICE */}
+          <input
+            type="number"
+            placeholder="Max ₹"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            className="border rounded-lg px-4 py-2 text-gray-800"
+          />
+        </div>
       </div>
 
-      {error && <p className="text-red-600 mb-4">{error}</p>}
+      {/* RESULTS */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredServices.map((service) => (
+          <div
+            key={service.id}
+            onClick={() =>
+              router.push(`/user-dashboard/service/${service.id}`)
+            }
+            className="bg-white p-5 rounded-xl shadow hover:shadow-lg cursor-pointer transition"
+          >
+            <h3 className="text-xl font-semibold">{service.name}</h3>
+            <p className="text-gray-500">{service.business.name}</p>
 
-      {filteredServices?.length > 0 ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredServices?.map((svc) => (
-            <BusinessCard key={svc.id} service={svc} />
-          ))}
-        </div>
-      ) : (
-        <p className="text-gray-500 text-center mt-10">
-          No businesses available at the moment.
-        </p>
-      )}
+            <div className="mt-2 flex justify-between items-center">
+              <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                {service.category}
+              </span>
+              <span className="font-bold text-blue-600">
+                ₹ {service.price}
+              </span>
+            </div>
+
+            <p className="text-sm text-gray-400 mt-1">
+              {service.durationMinutes} mins
+            </p>
+          </div>
+        ))}
+
+        {filteredServices.length === 0 && (
+          <p className="text-gray-500 col-span-full text-center">
+            No services found. Try adjusting filters.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
