@@ -1,43 +1,83 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Tabs from "@/app/components/Tabs";
-import ServicesPage from "./services/page";
-import SocialPage from "./social/page";
-import { Button, Spin } from "antd";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import Image from "next/image";
-import { ArrowRightOutlined } from "@ant-design/icons";
+import Tabs from "@/app/components/Tabs";
+import { Button, Spin, Modal, Input } from "antd";
+import BusinessServicesPage from "./services/page";
 import BusinessSettingsPage from "./settings/page";
+import SocialPage from "./social/page";
 
-/* --------------------------
-   ORDER LIST COMPONENT
---------------------------- */
-function OrdersList({ orders, onOpenOrder }: any) {
-  if (!orders?.length)
+/* -----------------------------
+   Types (based on backend)
+------------------------------ */
+type Booking = {
+  id: string;
+  status: "REQUESTED" | "ACCEPTED" | "REJECTED" | "COMPLETED";
+  scheduledAt?: string;
+  priceSnapshot?: number;
+  user: {
+    id: string;
+    name: string;
+    phone: string;
+  };
+  service: {
+    name: string;
+    durationMinutes: number;
+  };
+  business: {
+    name: string;
+  };
+};
+
+/* -----------------------------
+   Orders List
+------------------------------ */
+function OrdersList({
+  orders,
+  onSelect,
+}: {
+  orders: Booking[];
+  onSelect: (b: Booking) => void;
+}) {
+  if (!orders.length) {
     return (
       <div className="p-6 text-center text-gray-500">
-        No orders yet for your business.
+        No bookings yet.
       </div>
     );
+  }
 
   return (
     <div className="space-y-3">
-      {orders.map((order: any) => (
+      {orders.map((b) => (
         <div
-          key={order.id}
-          className="bg-white rounded-xl p-4 shadow border hover:shadow-lg cursor-pointer transition"
-          onClick={() => onOpenOrder(order)}
+          key={b.id}
+          onClick={() => onSelect(b)}
+          className="bg-white border rounded-xl p-4 shadow-sm hover:shadow cursor-pointer"
         >
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="font-semibold">Order #{order.id}</h3>
-              <p className="text-gray-500 text-sm">{order.customerName}</p>
-              <p className="text-gray-600 text-sm capitalize">{order.status}</p>
+              <div className="font-semibold">
+                {b.service.name}
+              </div>
+              <div className="text-sm text-gray-500">
+                {b.user.name} • {b.user.phone}
+              </div>
+              <div className="text-xs capitalize text-gray-600">
+                {b.status.toLowerCase()}
+              </div>
             </div>
+
             <div className="text-right">
-              <p className="font-semibold text-lg">₹{order.total}</p>
-              <ArrowRightOutlined className="text-gray-400 text-lg" />
+              <div className="font-semibold">
+                ₹{b.priceSnapshot ?? "-"}
+              </div>
+              {b.scheduledAt && (
+                <div className="text-xs text-gray-500">
+                  {new Date(b.scheduledAt).toLocaleString()}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -46,194 +86,201 @@ function OrdersList({ orders, onOpenOrder }: any) {
   );
 }
 
-/* --------------------------
-   ORDER DETAILS COMPONENT
---------------------------- */
-function OrderDetails({ order, onBack }: any) {
-  if (!order) return null;
+/* -----------------------------
+   Order Details
+------------------------------ */
+function OrderDetails({
+  booking,
+  onBack,
+  refresh,
+}: {
+  booking: Booking;
+  onBack: () => void;
+  refresh: () => void;
+}) {
+  const token = localStorage.getItem("token");
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectOpen, setRejectOpen] = useState(false);
+
+  async function action(type: "accept" | "reject" | "complete") {
+    await axios.put(
+      `${process.env.NEXT_PUBLIC_API_URL}/business-bookings/${booking.id}/${type}`,
+      type === "reject" ? { reason: rejectReason } : {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    refresh();
+    onBack();
+  }
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-lg border">
+    <div className="bg-white border rounded-xl p-6 shadow">
       <Button onClick={onBack} className="mb-4">
-        ← Back to Orders
+        ← Back
       </Button>
 
-      <h2 className="text-2xl font-semibold mb-3">
-        Order #{order.id}
+      <h2 className="text-xl font-semibold mb-4">
+        Booking Details
       </h2>
 
-      <div className="grid md:grid-cols-2 gap-6 mt-4">
-        <div className="border p-4 rounded-lg shadow-sm">
-          <h3 className="font-semibold mb-2">Customer Info</h3>
-          <p><b>Name:</b> {order.customerName}</p>
-          <p><b>Phone:</b> {order.phone}</p>
-          <p><b>Address:</b> {order.address}</p>
+      <div className="grid md:grid-cols-2 gap-6">
+        <div>
+          <p><b>Customer:</b> {booking.user.name}</p>
+          <p><b>Phone:</b> {booking.user.phone}</p>
+          <p><b>Service:</b> {booking.service.name}</p>
+          <p><b>Duration:</b> {booking.service.durationMinutes} mins</p>
         </div>
 
-        <div className="border p-4 rounded-lg shadow-sm">
-          <h3 className="font-semibold mb-2">Status</h3>
-          <p className="capitalize">{order.status}</p>
-
-          <div className="flex gap-2 mt-3 flex-wrap">
-            {["assigned", "in-progress", "completed"].map((s) => (
-              <Button
-                key={s}
-                type={order.status === s ? "primary" : "default"}
-                onClick={() => order.updateStatus(s)}
-              >
-                {s.toUpperCase()}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        <div className="md:col-span-2 border p-4 rounded-lg shadow-sm">
-          <h3 className="font-semibold mb-2">Services</h3>
-          {order.items?.map((item: any, i: number) => (
-            <div
-              key={i}
-              className="flex justify-between py-2 border-b last:border-none"
-            >
-              <span>
-                {item.name} × {item.qty}
-              </span>
-              <span>₹{item.price}</span>
-            </div>
-          ))}
-
-          <div className="flex justify-between mt-4 font-semibold text-lg">
-            <span>Total</span>
-            <span>₹{order.total}</span>
-          </div>
+        <div>
+          <p><b>Status:</b> {booking.status}</p>
+          <p><b>Price:</b> ₹{booking.priceSnapshot}</p>
+          {booking.scheduledAt && (
+            <p>
+              <b>Scheduled:</b>{" "}
+              {new Date(booking.scheduledAt).toLocaleString()}
+            </p>
+          )}
         </div>
       </div>
+
+      {/* ACTIONS */}
+      <div className="flex gap-3 mt-6 flex-wrap">
+        {booking.status === "REQUESTED" && (
+          <>
+            <Button
+              type="primary"
+              onClick={() => action("accept")}
+            >
+              Accept
+            </Button>
+
+            <Button danger onClick={() => setRejectOpen(true)}>
+              Reject
+            </Button>
+          </>
+        )}
+
+        {booking.status === "ACCEPTED" && (
+          <Button
+            type="primary"
+            onClick={() => action("complete")}
+          >
+            Mark Completed
+          </Button>
+        )}
+      </div>
+
+      {/* Reject Modal */}
+      <Modal
+        title="Reject Booking"
+        open={rejectOpen}
+        onOk={() => action("reject")}
+        onCancel={() => setRejectOpen(false)}
+      >
+        <Input.TextArea
+          placeholder="Reason for rejection"
+          value={rejectReason}
+          onChange={(e) => setRejectReason(e.target.value)}
+        />
+      </Modal>
     </div>
   );
 }
 
-/* --------------------------
-   BUSINESS DASHBOARD PAGE
---------------------------- */
+/* -----------------------------
+   MAIN DASHBOARD
+------------------------------ */
 export default function BusinessDashboard() {
-  const [orders, setOrders] = useState<any[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Booking | null>(null);
 
-  useEffect(() => {
-    loadOrders();
-  }, []);
-
-  const loadOrders = async () => {
+  async function loadBookings() {
     try {
       const token = localStorage.getItem("token");
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-      const businessRes = await axios.get("http://44.210.135.75:5001/business", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const allBusinesses = businessRes.data?.businesses || [];
-      const currentBusiness = allBusinesses.find(
-        (b: any) => b.b_ownerId === user.id
-      );
-
-      if (!currentBusiness) {
-        setLoadingOrders(false);
-        return;
-      }
-
-      const orderRes = await axios.get(
-        `http://44.210.135.75:5001/orders/business/${currentBusiness.b_id}`,
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/business-bookings`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setOrders(orderRes.data.orders || []);
-    } catch (err) {
-      console.error(err);
+      setBookings(res.data || []);
     } finally {
-      setLoadingOrders(false);
+      setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    loadBookings();
+  }, []);
 
   const tabs = [
     {
       label: "Overview",
       content: (
-        <div>
-          {/* Top Stats */}
+        <>
+          {/* STATS */}
           <div className="grid md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white p-5 rounded-xl shadow border">
-              <p className="text-gray-500">Total Orders</p>
-              <h3 className="text-3xl font-semibold">{orders.length}</h3>
-            </div>
-
-            <div className="bg-white p-5 rounded-xl shadow border">
-              <p className="text-gray-500">Active Orders</p>
-              <h3 className="text-3xl font-semibold">
-                {orders.filter((o) => o.status !== "completed").length}
+            <div className="bg-white border rounded-xl p-4">
+              <p className="text-gray-500">Total</p>
+              <h3 className="text-2xl font-semibold">
+                {bookings.length}
               </h3>
             </div>
 
-            <div className="bg-white p-5 rounded-xl shadow border">
+            <div className="bg-white border rounded-xl p-4">
+              <p className="text-gray-500">Pending</p>
+              <h3 className="text-2xl font-semibold">
+                {bookings.filter((b) => b.status === "REQUESTED").length}
+              </h3>
+            </div>
+
+            <div className="bg-white border rounded-xl p-4">
               <p className="text-gray-500">Revenue</p>
-              <h3 className="text-3xl font-semibold">
-                ₹
-                {orders.reduce((sum, o) => sum + (o.total || 0), 0)}
+              <h3 className="text-2xl font-semibold">
+                ₹ 0
               </h3>
             </div>
           </div>
 
-          {/* Orders Preview */}
-          <h2 className="text-xl font-semibold mb-4">Latest Orders</h2>
-
-          {loadingOrders ? (
+          {loading ? (
             <div className="flex justify-center py-10">
               <Spin size="large" />
             </div>
-          ) : (
-            <OrdersList
-              orders={orders}
-              onOpenOrder={(order: any) =>
-                setSelectedOrder({
-                  ...order,
-                  updateStatus: (status: any) => {
-                    axios.put(
-                      `http://44.210.135.75:5001/orders/${order.id}/status`,
-                      { status },
-                      { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-                    );
-                    setOrders((prev) =>
-                      prev.map((o) =>
-                        o.id === order.id ? { ...o, status } : o
-                      )
-                    );
-                    setSelectedOrder((prev: any) => ({ ...prev, status }));
-                  },
-                })
-              }
-            />
-          )}
-
-          {selectedOrder && (
+          ) : selected ? (
             <OrderDetails
-              order={selectedOrder}
-              onBack={() => setSelectedOrder(null)}
+              booking={selected}
+              onBack={() => setSelected(null)}
+              refresh={loadBookings}
             />
+          ) : (
+            <OrdersList orders={bookings} onSelect={setSelected} />
           )}
-        </div>
+        </>
       ),
     },
 
-    { label: "Services", content: <ServicesPage /> },
+    {
+      label: "Services",
+      content: <BusinessServicesPage/>,
+    },
 
-    { label: "Social", content: <SocialPage /> },
-    { label: "Settings", content: <BusinessSettingsPage /> }, // NEW TAB
+    {
+      label: "Social",
+      content: <SocialPage />,
+    },
 
+    {
+      label: "Settings",
+      content: <BusinessSettingsPage />,
+    },
   ];
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-semibold mb-6">Business Dashboard</h1>
+      <h1 className="text-3xl font-semibold mb-6">
+        Business Dashboard
+      </h1>
 
       <Tabs tabs={tabs} />
     </div>

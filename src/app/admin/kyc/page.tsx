@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import axios from "axios";
 
 type KycBusiness = {
   id: string;
   businessName: string;
   ownerName: string;
   phone: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  status: "KYC_PENDING" | "ACTIVE" | "KYC_REJECTED";
   pancard?: string;
   aadhaarCard?: string;
   gst?: string;
@@ -20,39 +21,87 @@ export default function AdminKycPage() {
   const [list, setList] = useState<KycBusiness[]>([]);
 
   useEffect(() => {
-    // 🔴 Replace later with API call
-    setTimeout(() => {
-      setList([
-        {
-          id: "1",
-          businessName: "Ravi Car Care",
-          ownerName: "Ravi Kumar",
-          phone: "9876543210",
-          status: "PENDING",
-          pancard: "ABCDE1234F",
-          aadhaarCard: "XXXX XXXX 1234",
-          gst: "29ABCDE1234F1Z5",
-          pancardImage: "/dummy/pan.png",
-          aadhaarImage: "/dummy/aadhaar.png",
-        },
-      ]);
-      setLoading(false);
-    }, 600);
+    fetchKyc();
   }, []);
 
-  function updateStatus(id: string, status: "APPROVED" | "REJECTED") {
-    setList((prev) =>
-      prev.map((b) =>
-        b.id === id ? { ...b, status } : b
-      )
-    );
+  async function fetchKyc() {
+    try {
+      const token = localStorage.getItem("token");
 
-    // 🔴 TODO: call backend
-    console.log("KYC update", id, status);
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/kyc/pending`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const mapped: KycBusiness[] = (res.data.items || []).map(
+        (b: any) => ({
+          id: b.id,
+          businessName: b.name,
+          ownerName: b.owner?.name,
+          phone: b.owner?.phone,
+          status: b.status,
+          pancard: b.pancard,
+          aadhaarCard: b.aadhaarCard,
+          gst: b.gst,
+          pancardImage: b.pancardKey
+            ? `${process.env.NEXT_PUBLIC_FILE_URL}/${b.pancardKey}`
+            : undefined,
+          aadhaarImage: b.aadhaarKey
+            ? `${process.env.NEXT_PUBLIC_FILE_URL}/${b.aadhaarKey}`
+            : undefined,
+        })
+      );
+
+      setList(mapped);
+    } catch (err) {
+      console.error("Failed to load KYC list", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function updateStatus(
+    id: string,
+    action: "approve" | "reject"
+  ) {
+    try {
+      const token = localStorage.getItem("token");
+
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/kyc/${id}/${action}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setList((prev) =>
+        prev.map((b) =>
+          b.id === id
+            ? {
+                ...b,
+                status:
+                  action === "approve"
+                    ? "ACTIVE"
+                    : "KYC_REJECTED",
+              }
+            : b
+        )
+      );
+    } catch (err) {
+      console.error("Failed to update KYC", err);
+      alert("Action failed. Check logs.");
+    }
   }
 
   if (loading) {
-    return <div className="text-gray-500">Loading KYC requests...</div>;
+    return <div className="text-gray-500">Loading KYC requests…</div>;
   }
 
   return (
@@ -60,7 +109,9 @@ export default function AdminKycPage() {
       <h1 className="text-2xl font-bold">KYC Requests</h1>
 
       {list.length === 0 && (
-        <div className="text-gray-500">No pending requests 🎉</div>
+        <div className="text-gray-500">
+          No pending requests 🎉
+        </div>
       )}
 
       <div className="space-y-4">
@@ -93,10 +144,7 @@ export default function AdminKycPage() {
             {/* DOCUMENTS */}
             <div className="flex gap-4 mt-4">
               {b.pancardImage && (
-                <DocPreview
-                  label="PAN"
-                  src={b.pancardImage}
-                />
+                <DocPreview label="PAN" src={b.pancardImage} />
               )}
               {b.aadhaarImage && (
                 <DocPreview
@@ -107,17 +155,17 @@ export default function AdminKycPage() {
             </div>
 
             {/* ACTIONS */}
-            {b.status === "PENDING" && (
+            {b.status === "KYC_PENDING" && (
               <div className="flex gap-3 mt-5">
                 <button
-                  onClick={() => updateStatus(b.id, "APPROVED")}
+                  onClick={() => updateStatus(b.id, "approve")}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg"
                 >
                   Approve
                 </button>
 
                 <button
-                  onClick={() => updateStatus(b.id, "REJECTED")}
+                  onClick={() => updateStatus(b.id, "reject")}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg"
                 >
                   Reject
@@ -134,17 +182,17 @@ export default function AdminKycPage() {
 /* ---------- Small Components ---------- */
 
 function StatusBadge({ status }: { status: string }) {
-  const map = {
-    PENDING: "bg-yellow-100 text-yellow-700",
-    APPROVED: "bg-green-100 text-green-700",
-    REJECTED: "bg-red-100 text-red-700",
+  const map: Record<string, string> = {
+    KYC_PENDING: "bg-yellow-100 text-yellow-700",
+    ACTIVE: "bg-green-100 text-green-700",
+    KYC_REJECTED: "bg-red-100 text-red-700",
   };
 
   return (
     <span
       className={`px-3 py-1 text-xs font-semibold rounded-full ${map[status]}`}
     >
-      {status}
+      {status.replaceAll("_", " ")}
     </span>
   );
 }

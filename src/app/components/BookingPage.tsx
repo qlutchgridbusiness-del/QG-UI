@@ -1,79 +1,72 @@
-// components/BookingPage.tsx
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/router";
-import axios from "axios";
-import styles from "./BookingPage.module.css";
+import BookingStatus from "./BookingStatus";
+import { Booking } from "@/app/business-dashboard/bookings/page";
 
-interface Service {
-  name: string;
-  price: number;
-  available: boolean;
-}
-
-const BookingPage: React.FC = () => {
-  const router = useRouter();
-  const { businessEmail } = router.query;
-  const [services, setServices] = useState<Service[]>([]);
-  const [errorMessage, setErrorMessage] = useState("");
-
-    const fetchServices = async () => {
-    try {
-      const res = await axios.get(
-        `http://44.210.135.75:5001/get-business-services?email=${businessEmail}`
-      );
-      const sortedServices: Service[] = res.data.services.sort((a: Service, b: Service) =>
-        a.available === b.available ? 0 : a.available ? -1 : 1
-      );
-      setServices(sortedServices);
-    } catch (err) {
-      console.error("Error fetching services:", err);
-      setErrorMessage("❌ No services found for this business.");
-    }
-  };
-
-  useEffect(() => {
-    if (businessEmail) fetchServices();
-  }, [businessEmail, fetchServices()]);
-
-  const handleBooking = (serviceName: string, price: number) => {
-    if (!businessEmail) return;
-
-    localStorage.setItem("bookingBusinessEmail", businessEmail as string);
-    localStorage.setItem("bookingServiceName", serviceName);
-    localStorage.setItem("bookingPrice", price.toString());
-
-    console.log("📌 Booking Data Saved to localStorage:", {
-      businessEmail,
-      serviceName,
-      price,
-      user_email: localStorage.getItem("userEmail"),
-    });
-
-    router.push(`/payment/${businessEmail}/${serviceName}/${price}`);
-  };
-
+export default function BookingCard({
+  booking,
+  onAccept,
+  onReject,
+  onComplete,
+}: {
+  booking: Booking;
+  onAccept: () => void;
+  onReject: () => void;
+  onComplete: () => void;
+}) {
   return (
-    <div className={styles.container}>
-      <h2>Services for {businessEmail}</h2>
-      {errorMessage && <p className={styles.error}>{errorMessage}</p>}
+    <div className="border rounded-xl p-4 bg-white shadow-sm space-y-2">
+      <div className="flex justify-between items-center">
+        <div className="font-semibold">{booking.user.name}</div>
+        <BookingStatus status={booking.status} />
+      </div>
 
-      <ul className={styles.serviceList}>
-        {services.map((service, index) => (
-          <li
-            key={index}
-            className={`${styles.serviceItem} ${!service.available ? styles.disabled : ""}`}
+      <div className="text-sm text-gray-600">
+        📞 {booking.user.phone}
+      </div>
+
+      <div className="text-sm">
+        🛠 {booking.service.name}
+      </div>
+
+      {booking.priceSnapshot && (
+        <div className="font-semibold text-indigo-600">
+          ₹{booking.priceSnapshot}
+        </div>
+      )}
+
+      {booking.scheduledAt && (
+        <div className="text-xs text-gray-500">
+          ⏰ {new Date(booking.scheduledAt).toLocaleString()}
+        </div>
+      )}
+
+      {/* ACTIONS */}
+      <div className="flex gap-3 pt-2">
+        {booking.status === "REQUESTED" && (
+          <>
+            <button
+              onClick={onAccept}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg"
+            >
+              Accept
+            </button>
+            <button
+              onClick={onReject}
+              className="px-4 py-2 bg-red-500 text-white rounded-lg"
+            >
+              Reject
+            </button>
+          </>
+        )}
+
+        {booking.status === "ACCEPTED" && (
+          <button
+            onClick={onComplete}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
           >
-            {service.name} - ₹{service.price}
-            {service.available && (
-              <button className={styles.bookNow} onClick={() => handleBooking(service.name, service.price)}>
-                Book Now
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
+            Mark Completed
+          </button>
+        )}
+      </div>
     </div>
   );
-};
-
-export default BookingPage;
+}

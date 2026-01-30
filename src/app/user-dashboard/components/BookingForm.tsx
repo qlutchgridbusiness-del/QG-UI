@@ -1,35 +1,31 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { apiPost } from "@/app/lib/api";
 
-export default function BookingForm({ serviceId }: { serviceId: string }) {
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    date: "",
-    time: "",
-  });
-  const [userId, setUserId] = useState<string | null>(null);
+export default function BookingForm({
+  serviceId,
+  businessId,
+}: {
+  serviceId: string;
+  businessId: string;
+}) {
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
   const [loading, setLoading] = useState(false);
-  const [successData, setSuccessData] = useState<any>(null);
+  const [success, setSuccess] = useState<any>(null);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    // Assume user info is saved as { id: "uuid", name: "John" }
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const parsed = JSON.parse(storedUser);
-      setUserId(parsed.id);
-    }
-  }, []);
-
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.phone || !form.date || !form.time) {
-      setError("⚠️ Please fill in all details.");
+
+    if (!date || !time) {
+      setError("Please select date and time");
       return;
     }
-    if (!userId) {
-      setError("⚠️ User not logged in.");
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("Please login to book service");
       return;
     }
 
@@ -37,60 +33,39 @@ export default function BookingForm({ serviceId }: { serviceId: string }) {
     setError("");
 
     try {
-      const res = await fetch("http://44.210.135.75:5001/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId, // ✅ now included
+      const scheduledAt = new Date(`${date}T${time}`).toISOString();
+
+      const res = await apiPost(
+        "/bookings",
+        {
           serviceId,
-          userName: form.name,
-          userPhone: form.phone,
-          date: form.date,
-          time: form.time,
-          status: "pending",
-        }),
-      });
+          businessId,
+          scheduledAt,
+        },
+        token
+      );
 
-      const data = await res.json();
-
-      if (res.ok) {
-        setSuccessData({
-          ...form,
-          bookingId: data.id || Math.floor(Math.random() * 100000),
-        });
-        setForm({ name: "", phone: "", date: "", time: "" });
-      } else {
-        setError(`❌ ${data.message || "Failed to place booking."}`);
-      }
-    } catch (err) {
+      setSuccess(res);
+    } catch (err: any) {
       console.error(err);
-      setError("❌ Something went wrong while creating booking.");
+      setError("Failed to create booking");
     } finally {
       setLoading(false);
     }
   };
 
-  if (successData) {
+  if (success) {
     return (
-      <div className="max-w-md bg-white p-6 rounded-xl shadow-md text-center space-y-3">
-        <h3 className="text-2xl font-semibold text-green-700">
-          ✅ Booking Confirmed!
+      <div className="bg-white p-6 rounded-xl shadow text-center space-y-3">
+        <h3 className="text-xl font-semibold text-green-600">
+          Booking Requested ✅
         </h3>
-        <p className="text-gray-700">
-          <strong>Date:</strong> {successData.date}
+        <p className="text-gray-600">
+          We’ve sent your request to the business.
         </p>
-        <p className="text-gray-700">
-          <strong>Time:</strong> {successData.time}
+        <p className="text-sm text-gray-500">
+          Booking ID: <span className="font-mono">{success.id}</span>
         </p>
-        <p className="text-gray-500 text-sm">
-          Booking ID: <span className="font-mono">{successData.bookingId}</span>
-        </p>
-        <button
-          onClick={() => setSuccessData(null)}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-        >
-          Book Another
-        </button>
       </div>
     );
   }
@@ -98,48 +73,36 @@ export default function BookingForm({ serviceId }: { serviceId: string }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-md space-y-4 bg-white p-6 rounded-xl shadow-md"
+      className="bg-white p-6 rounded-xl shadow space-y-4"
     >
-      <h3 className="text-xl font-semibold text-gray-700">Book Service</h3>
-
-      <input
-        placeholder="Your Name"
-        className="border p-2 rounded w-full focus:outline-blue-500"
-        value={form.name}
-        onChange={(e) => setForm({ ...form, name: e.target.value })}
-      />
-
-      <input
-        placeholder="Phone Number"
-        className="border p-2 rounded w-full focus:outline-blue-500"
-        value={form.phone}
-        onChange={(e) => setForm({ ...form, phone: e.target.value })}
-      />
+      <h3 className="text-lg font-semibold">Book this service</h3>
 
       <div className="flex gap-3">
         <input
           type="date"
-          className="border p-2 rounded w-1/2 focus:outline-blue-500"
-          value={form.date}
-          onChange={(e) => setForm({ ...form, date: e.target.value })}
+          className="border p-2 rounded w-1/2"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
         />
         <input
           type="time"
-          className="border p-2 rounded w-1/2 focus:outline-blue-500"
-          value={form.time}
-          onChange={(e) => setForm({ ...form, time: e.target.value })}
+          className="border p-2 rounded w-1/2"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
         />
       </div>
 
       <button
         type="submit"
-        className="bg-blue-600 text-white px-4 py-2 rounded w-full hover:bg-blue-700 disabled:opacity-70 transition"
         disabled={loading}
+        className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 disabled:opacity-60"
       >
-        {loading ? "Booking..." : "Book Now"}
+        {loading ? "Booking..." : "Confirm Booking"}
       </button>
 
-      {error && <p className="text-red-600 text-center text-sm">{error}</p>}
+      {error && (
+        <p className="text-red-600 text-sm text-center">{error}</p>
+      )}
     </form>
   );
 }

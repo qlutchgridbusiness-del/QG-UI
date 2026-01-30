@@ -48,7 +48,7 @@ export default function BusinessSettingsPage() {
       const token = localStorage.getItem("token");
       const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-      const businessRes = await axios.get("http://44.210.135.75:5001/business", {
+      const businessRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/business/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -122,7 +122,7 @@ export default function BusinessSettingsPage() {
       const token = localStorage.getItem("token");
 
       await axios.put(
-        `http://44.210.135.75:5001/business/${business.b_id}/settings`,
+        `NEXT_PUBLIC_API_URL/business/${business.b_id}/settings`,
         {
           acceptingOrders,
           workingDays: selectedDays,

@@ -1,123 +1,171 @@
 "use client";
-import React, { useState } from "react";
-import {
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
-} from "@/app/firebase/firebaseConfig";
-import axios from "axios";
+
+import { useState } from "react";
+import { apiPost } from "@/app/lib/api";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
-  const [idToken, setIdToken] = useState("");
-  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const [step, setStep] = useState<"PHONE" | "OTP">("PHONE");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+  const router = useRouter();
 
-  const sendOtp = async () => {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(
-        auth,
-        "recaptcha-container",
-        { size: "invisible" }
-      );
+  /* -------------------------
+     Helpers
+  -------------------------- */
+  function startCooldown(seconds = 30) {
+    setCooldown(seconds);
+    const interval = setInterval(() => {
+      setCooldown((c) => {
+        if (c <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+  }
+
+  function isValidPhone(phone: string) {
+    return /^[6-9]\d{9}$/.test(phone);
+  }
+
+  /* -------------------------
+     API calls
+  -------------------------- */
+  async function sendOtp() {
+    setError(null);
+
+    if (!isValidPhone(phone)) {
+      setError("Enter a valid 10-digit Indian mobile number");
+      return;
     }
 
-    const formatted = phone.startsWith("+91") ? phone : `+91${phone}`;
-
-    const confirmation = await signInWithPhoneNumber(
-      auth,
-      formatted,
-      window.recaptchaVerifier
-    );
-
-    setConfirmationResult(confirmation);
-    alert("OTP sent!");
-  };
-
-  const verifyOtp = async () => {
-    const result = await confirmationResult.confirm(otp);
-    const token = await result.user.getIdToken();
-    setIdToken(token);
-    alert("Verification successful!");
-  };
-
-  const handleLogin = async () => {
-    if (!idToken) return alert("Please verify phone first");
     setLoading(true);
-
     try {
-      const res = await axios.post("/auth/login", { phone, idToken });
-
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      localStorage.setItem("businessId", res.data.business?.id);
-      localStorage.setItem("userRole", res.data.user.role);
-
-      window.location.href =
-        res.data.user.role === "business"
-          ? "/business-dashboard"
-          : "/user-dashboard";
+      await apiPost("/auth/request-otp", { phone });
+      setStep("OTP");
+      startCooldown(30);
+    } catch (err: any) {
+      setError(err?.message || "Failed to send OTP");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
+  async function verifyOtp() {
+    setError(null);
+
+    if (otp.length !== 6) {
+      setError("OTP must be 6 digits");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await apiPost("/auth/verify-otp", { phone, otp });
+
+      // 🆕 New user → go to register with tempToken
+      if (res.isNewUser) {
+        localStorage.setItem("tempToken", res.tempToken);
+        localStorage.setItem("verifiedPhone", phone);
+        router.push("/auth/register");
+        return;
+      }
+
+      // Existing user
+      localStorage.setItem("token", res.token);
+      localStorage.setItem("user", JSON.stringify(res.user));
+
+      router.push(
+        res.user.role === "BUSINESS" ? "/business-dashboard" : "/user-dashboard"
+      );
+    } catch (err: any) {
+      setError(err?.message || "Invalid OTP");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /* -------------------------
+     UI
+  -------------------------- */
   return (
-    <div className="min-h-screen bg-gradient-to-br flex items-center justify-center px-4">
-      <div className="backdrop-blur-xl bg-white/10 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-white/20">
-        <h1 className="text-3xl font-bold text-white text-center mb-6">
-          Welcome Back
-        </h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="bg-white p-6 rounded-2xl shadow w-full max-w-md space-y-5">
+        <h2 className="text-2xl font-bold text-center">
+          {step === "PHONE" ? "Login / Register" : "Verify OTP"}
+        </h2>
 
-        <div className="space-y-4">
-          <input
-            className="w-full p-3 rounded-xl bg-white/20 text-white placeholder-white/70
-                       border border-white/30 focus:ring-2 focus:ring-blue-300"
-            placeholder="Phone Number"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
+        {error && (
+          <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
 
-          <button
-            onClick={sendOtp}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold"
-          >
-            Send OTP
-          </button>
+        {/* PHONE STEP */}
+        {step === "PHONE" && (
+          <>
+            <input
+              placeholder="Mobile number (10 digits)"
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+              maxLength={10}
+            />
 
-          <input
-            className="w-full p-3 rounded-xl bg-white/20 text-white placeholder-white/70 border border-white/30"
-            placeholder="Enter OTP"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-          />
+            <button
+              onClick={sendOtp}
+              disabled={loading}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-medium disabled:opacity-50"
+            >
+              {loading ? "Sending OTP..." : "Send OTP"}
+            </button>
+          </>
+        )}
 
-          <button
-            onClick={verifyOtp}
-            className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold"
-          >
-            Verify OTP
-          </button>
+        {/* OTP STEP */}
+        {step === "OTP" && (
+          <>
+            <input
+              placeholder="Enter 6-digit OTP"
+              className="w-full p-3 border rounded-lg tracking-widest text-center text-lg focus:ring-2 focus:ring-green-500"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+              maxLength={6}
+            />
 
-          <button
-            onClick={handleLogin}
-            disabled={loading}
-            className={`w-full py-3 rounded-xl text-white text-lg font-semibold ${
-              loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {loading ? "Logging in..." : "Login"}
-          </button>
+            <button
+              onClick={verifyOtp}
+              disabled={loading}
+              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium disabled:opacity-50"
+            >
+              {loading ? "Verifying..." : "Verify & Continue"}
+            </button>
 
-          <p className="text-center text-sm mt-3">
-            Don't have an account?{" "}
-            <a href="/auth/register" className="underline">
-              Register
-            </a>
-          </p>
-        </div>
+            <button
+              onClick={sendOtp}
+              disabled={cooldown > 0 || loading}
+              className="w-full text-sm text-indigo-600 hover:underline disabled:text-gray-400"
+            >
+              {cooldown > 0 ? `Resend OTP in ${cooldown}s` : "Resend OTP"}
+            </button>
 
-        <div id="recaptcha-container"></div>
+            <button
+              onClick={() => {
+                setStep("PHONE");
+                setOtp("");
+                setError(null);
+              }}
+              className="w-full text-sm text-gray-500 hover:underline"
+            >
+              Change phone number
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

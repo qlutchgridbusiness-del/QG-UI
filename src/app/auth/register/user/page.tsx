@@ -1,63 +1,120 @@
 "use client";
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 import { apiPost } from "@/app/lib/api";
+import { useRouter } from "next/navigation";
 
 export default function UserRegisterPage() {
+  const router = useRouter();
+
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function submit(form: FormData) {
+  const [phone, setPhone] = useState<string | null>(null);
+  const [tempToken, setTempToken] = useState<string | null>(null);
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+  });
+
+  /* -------------------------
+     INIT: load temp auth state
+  -------------------------- */
+  useEffect(() => {
+    const p = localStorage.getItem("verifiedPhone");
+    const t = localStorage.getItem("tempToken");
+
+    if (!p || !t) {
+      router.replace("/auth/login");
+      return;
+    }
+
+    setPhone(p);
+    setTempToken(t);
+  }, [router]);
+
+  /* -------------------------
+     Submit registration
+  -------------------------- */
+  async function submitRegistration() {
+    setError(null);
+
+    if (!phone || !tempToken) {
+      setError("Session expired. Please login again.");
+      return;
+    }
+
+    if (!form.name.trim()) {
+      setError("Name is required");
+      return;
+    }
+
     setLoading(true);
+    try {
+      const res = await apiPost(
+        "/auth/register",
+        {
+          role: "user",
+          phone, // backend will cross-check with token
+          name: form.name.trim(),
+          email: form.email?.trim() || undefined,
+        },
+        tempToken // 👈 temp JWT (NOT full auth token)
+      );
 
-    await apiPost("/auth/register/user", {
-      name: form.get("name"),
-      phone: form.get("phone"),
-      email: form.get("email"),
-    });
+      // 🔐 Cleanup temp auth
+      localStorage.removeItem("tempToken");
+      localStorage.removeItem("verifiedPhone");
 
-    // Next: OTP verification
-    window.location.href = "/verify-otp";
+      // ✅ Save real auth
+      localStorage.setItem("token", res.token);
+      localStorage.setItem("user", JSON.stringify(res.user));
+
+      router.replace("/user-dashboard");
+    } catch (err: any) {
+      setError(err?.message || "Registration failed");
+    } finally {
+      setLoading(false);
+    }
   }
 
+  /* -------------------------
+     UI
+  -------------------------- */
   return (
-    <form
-      action={submit}
-      className="min-h-screen flex items-center justify-center px-4 bg-gray-50"
-    >
-      <div className="max-w-md w-full bg-white rounded-2xl shadow p-6 space-y-4">
-        <h2 className="text-xl font-bold">Create Account</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="bg-white p-6 rounded-2xl shadow w-full max-w-md space-y-5">
+        <h2 className="text-2xl font-bold text-center">Complete Profile</h2>
+
+        {error && (
+          <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
 
         <input
-          name="name"
           placeholder="Full name"
-          required
-          className="w-full p-3 border rounded-lg"
+          className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
         />
 
         <input
-          name="phone"
-          placeholder="Mobile number"
-          required
-          className="w-full p-3 border rounded-lg"
-        />
-
-        <input
-          name="email"
-          placeholder="Email address"
-          required
-          className="w-full p-3 border rounded-lg"
+          placeholder="Email (optional)"
+          className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
         />
 
         <button
+          onClick={submitRegistration}
           disabled={loading}
-          className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold"
+          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-medium disabled:opacity-50"
         >
-          {loading ? "Continuing..." : "Continue"}
+          {loading ? "Creating account..." : "Continue"}
         </button>
-
-        <p className="text-xs text-gray-500 text-center">
-          OTP verification will be done next
-        </p>
       </div>
-    </form>
+    </div>
   );
 }

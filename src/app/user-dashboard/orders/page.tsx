@@ -1,62 +1,88 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { apiGet } from "@/app/lib/api";
+
+type Booking = {
+  id: string;
+  status: "REQUESTED" | "CONFIRMED" | "CANCELLED";
+  scheduledAt?: string;
+  createdAt: string;
+  business: {
+    id: string;
+    name: string;
+  };
+  service: {
+    id: string;
+    name: string;
+    price?: number;
+  };
+};
 
 export default function UserOrdersPage() {
-  const [orders, setOrders] = useState<any[]>([]);
-  const userName = "Demo User";
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const allBookings =
-      JSON.parse(localStorage.getItem("bookings") || "[]");
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-    const userOrders = allBookings.filter(
-      (b: any) => b.user === userName
-    );
-
-    setOrders(userOrders);
+    apiGet("/bookings/my", token)
+      .then(setBookings)
+      .catch(() => alert("Failed to load bookings"))
+      .finally(() => setLoading(false));
   }, []);
 
-  return (
-    <div className="max-w-5xl mx-auto px-4">
-      <h1 className="text-3xl font-bold mb-6">My Orders</h1>
+  if (loading) {
+    return (
+      <div className="text-center py-20 text-gray-500">
+        Loading your bookings…
+      </div>
+    );
+  }
 
-      {orders.length === 0 && (
-        <p className="text-gray-500">No orders yet</p>
-      )}
+  if (bookings.length === 0) {
+    return (
+      <div className="text-center py-20 text-gray-500">
+        No bookings yet
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-6">
+      <h1 className="text-2xl font-bold mb-6 text-white">My Orders</h1>
 
       <div className="space-y-4">
-        {orders.map((o) => (
+        {bookings.map((b) => (
           <div
-            key={o.id}
-            className="bg-white p-5 rounded-xl shadow flex justify-between"
+            key={b.id}
+            className="bg-white rounded-xl shadow p-4 flex justify-between items-center"
           >
             <div>
-              <h3 className="font-semibold text-lg">
-                {o.serviceName}
-              </h3>
-              <p className="text-gray-500">
-                {o.businessName}
+              <h3 className="font-semibold">{b.service.name}</h3>
+              <p className="text-sm text-gray-500">
+                {b.business.name}
               </p>
-              <p className="text-sm text-gray-400">
-                Ordered on{" "}
-                {new Date(o.createdAt).toLocaleString()}
-              </p>
+
+              {b.scheduledAt && (
+                <p className="text-sm text-gray-600 mt-1">
+                  📅 {new Date(b.scheduledAt).toLocaleString()}
+                </p>
+              )}
             </div>
 
             <div className="text-right">
-              <p className="font-semibold">₹ {o.price}</p>
-
               <span
-                className={`inline-block mt-2 px-3 py-1 rounded-full text-sm font-medium ${
-                  o.status === "PENDING"
+                className={`text-sm font-medium px-3 py-1 rounded-full ${
+                  b.status === "REQUESTED"
                     ? "bg-yellow-100 text-yellow-700"
-                    : o.status === "ACCEPTED"
+                    : b.status === "CONFIRMED"
                     ? "bg-green-100 text-green-700"
                     : "bg-red-100 text-red-700"
                 }`}
               >
-                {o.status}
+                {b.status}
               </span>
             </div>
           </div>

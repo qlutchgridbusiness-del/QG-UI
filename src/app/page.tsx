@@ -43,7 +43,8 @@ export default function HomePage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.6 }}
           >
-            Car care, full service, painting & more — trusted experts in minutes.
+            Car care, full service, painting & more — trusted experts in
+            minutes.
           </motion.p>
 
           {/* SEARCH BAR */}
@@ -69,30 +70,6 @@ export default function HomePage() {
               </button>
             </div>
           </motion.div>
-
-          {/* DASHBOARD BUTTONS */}
-          <motion.div
-            className="mt-10 flex flex-col md:flex-row gap-4 justify-center"
-            initial={{ opacity: 0, y: 25 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-          >
-            {/* USER DASHBOARD */}
-            <button
-              onClick={() => router.push("/user-dashboard")}
-              className="px-8 py-4 bg-white text-gray-900 shadow-lg hover:shadow-xl rounded-xl font-semibold text-lg border border-gray-200 hover:bg-gray-100 transition"
-            >
-              Go to User Dashboard
-            </button>
-
-            {/* BUSINESS DASHBOARD */}
-            <button
-              onClick={() => router.push("/business-dashboard")}
-              className="px-8 py-4 bg-blue-600 text-white shadow-lg hover:bg-blue-700 hover:shadow-xl rounded-xl font-semibold text-lg transition"
-            >
-              Go to Business Dashboard
-            </button>
-          </motion.div>
         </div>
       </div>
 
@@ -102,36 +79,49 @@ export default function HomePage() {
           Popular Services
         </h2>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 px-6 max-w-5xl mx-auto">
-          {[
-            { title: "Full Car Service", img: "/cat-service.png" },
-            { title: "Car Painting", img: "/cat-painting.png" },
-            { title: "Denting", img: "/car-denting.png" },
-            { title: "Interior Cleaning", img: "/car-cleaning.png" },
-          ].map((c, i) => (
-            <motion.div
-              key={i}
-              className="bg-white rounded-xl shadow-lg p-4 cursor-pointer hover:shadow-2xl transition group"
-              whileHover={{ scale: 1.04 }}
-              onClick={() => router.push(`/user-dashboard?search=${c.title}`)}
-            >
-              <div className="relative h-32 w-full rounded-lg overflow-hidden mb-3 bg-gray-100">
-                <Image
-                  src={c.img}
-                  alt={c.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition"
-                />
-              </div>
-              <h3 className="text-center font-semibold">{c.title}</h3>
-            </motion.div>
-          ))}
+        <div className="max-w-5xl mx-auto px-6">
+          <div
+            className="
+      flex gap-6 overflow-x-auto
+      snap-x snap-mandatory
+      scrollbar-hide
+      py-2
+    "
+          >
+            {[
+              { title: "Full Car Service", img: "/Untitled 4.png" },
+              { title: "Car Painting", img: "/Untitled 12.png" },
+              { title: "Interior Cleaning", img: "/Untitled 7.png" },
+              { title: "Engine Repair", img: "/Untitled 2.png" },
+            ].map((c, i) => (
+              <motion.div
+                key={i}
+                onClick={() => router.push(`/user-dashboard?search=${c.title}`)}
+                whileHover={{ scale: 1.04 }}
+                className="
+          min-w-[70%] sm:min-w-[45%] md:min-w-[22%]
+          snap-start
+          bg-white rounded-xl shadow-lg
+          cursor-pointer overflow-hidden
+        "
+              >
+                <div className="relative h-36 w-full bg-gray-100">
+                  <Image
+                    src={c.img}
+                    alt={c.title}
+                    fill
+                    className="object-cover hover:scale-105 transition"
+                  />
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* WHY CHOOSE US */}
       <section className="py-20 bg-white">
-        <h2 className="text-3xl font-bold text-center mb-10">
+        <h2 className="text-3xl font-bold text-center mb-12">
           Why Choose QlutchGrid?
         </h2>
 
@@ -139,24 +129,33 @@ export default function HomePage() {
           {[
             {
               title: "Verified Professionals",
-              desc: "Trained & background-checked experts for complete peace of mind.",
+              img: "/Untitled 16.png",
             },
             {
               title: "Instant Booking",
-              desc: "Fast & seamless booking experience—you choose, we deliver.",
+              img: "/Untitled 14.png",
             },
             {
               title: "Transparent Pricing",
-              desc: "No hidden charges. Honest pricing for every service.",
+              img: "/Untitled 20.png",
             },
-          ].map((box, i) => (
+          ].map((item, i) => (
             <motion.div
               key={i}
-              className="p-6 rounded-xl bg-white shadow-lg hover:shadow-2xl transition border border-gray-100"
-              whileHover={{ y: -5 }}
+              className="p-6 rounded-xl bg-white shadow-lg hover:shadow-2xl transition border border-gray-100 text-center"
+              whileHover={{ y: -6, scale: 1.02 }}
             >
-              <h3 className="text-xl font-semibold mb-3">{box.title}</h3>
-              <p className="text-gray-600">{box.desc}</p>
+              {/* Image */}
+              <div className="relative h-36 w-full mb-6 overflow-hidden rounded-lg bg-gray-100">
+                <img
+                  src={item.img}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              {/* Title */}
+              <h3 className="text-xl font-semibold">{item.title}</h3>
             </motion.div>
           ))}
         </div>

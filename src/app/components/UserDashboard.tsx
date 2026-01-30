@@ -19,7 +19,7 @@ const UserDashboard: React.FC = () => {
 
   const fetchBusinesses = async () => {
     try {
-      const res = await axios.get("http://44.210.135.75:5001/get-businesses");
+      const res = await axios.get("NEXT_PUBLIC_API_URL/get-businesses");
       setBusinesses(res.data.businesses);
     } catch (err) {
       console.error(err);

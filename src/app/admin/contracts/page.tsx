@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 type PendingContract = {
   id: string;
@@ -17,27 +18,66 @@ export default function PendingContractsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // TODO: replace with real API
-    setTimeout(() => {
-      setContracts([
-        {
-          id: "b1",
-          businessName: "QuickFix Garage",
-          ownerName: "Ramesh Kumar",
-          phone: "9876543210",
-          submittedAt: "2025-12-15",
-        },
-        {
-          id: "b2",
-          businessName: "AutoCare Pro",
-          ownerName: "Suresh Rao",
-          phone: "9123456789",
-          submittedAt: "2025-12-14",
-        },
-      ]);
-      setLoading(false);
-    }, 500);
+    fetchContracts();
   }, []);
+
+  async function fetchContracts() {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/contracts/pending`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const mapped: PendingContract[] = (res.data.items || []).map(
+        (b: any) => ({
+          id: b.id,
+          businessName: b.name,
+          ownerName: b.owner?.name,
+          phone: b.owner?.phone,
+          submittedAt: new Date(b.submittedAt).toLocaleDateString(),
+        })
+      );
+
+      setContracts(mapped);
+    } catch (err) {
+      console.error("Failed to load pending contracts", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleAction(
+    businessId: string,
+    action: "approve" | "reject"
+  ) {
+    try {
+      const token = localStorage.getItem("token");
+
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/contracts/${businessId}/${action}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Remove from list after action
+      setContracts((prev) =>
+        prev.filter((c) => c.id !== businessId)
+      );
+    } catch (err) {
+      console.error("Contract action failed", err);
+      alert("Action failed. Check backend logs.");
+    }
+  }
 
   if (loading) {
     return <div className="p-6">Loading pending contracts…</div>;
@@ -56,7 +96,10 @@ export default function PendingContractsPage() {
       {/* List */}
       <div className="space-y-4">
         {contracts.map((c) => (
-          <div key={c.id} className="border rounded-xl p-4 bg-white shadow-sm">
+          <div
+            key={c.id}
+            className="border rounded-xl p-4 bg-white shadow-sm"
+          >
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               {/* Info */}
               <div className="space-y-1">
@@ -66,7 +109,9 @@ export default function PendingContractsPage() {
                 <div className="text-sm text-gray-600">
                   Owner: {c.ownerName}
                 </div>
-                <div className="text-sm text-gray-600">Phone: {c.phone}</div>
+                <div className="text-sm text-gray-600">
+                  Phone: {c.phone}
+                </div>
                 <div className="text-xs text-gray-400">
                   Submitted on {c.submittedAt}
                 </div>
@@ -75,21 +120,23 @@ export default function PendingContractsPage() {
               {/* Actions */}
               <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
                 <button
-                  onClick={() => router.push(`/admin/business/${c.id}`)}
+                  onClick={() =>
+                    router.push(`/admin/businesses/${c.id}`)
+                  }
                   className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50"
                 >
                   View
                 </button>
 
                 <button
-                  onClick={() => alert("Contract approved")}
+                  onClick={() => handleAction(c.id, "approve")}
                   className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
                 >
                   Approve
                 </button>
 
                 <button
-                  onClick={() => alert("Contract rejected")}
+                  onClick={() => handleAction(c.id, "reject")}
                   className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
                   Reject

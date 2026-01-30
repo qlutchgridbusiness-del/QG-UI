@@ -1,60 +1,192 @@
 "use client";
 
-import ImageGallery from "../components/ImageGallery";
-import UploadImageModal from "../components/UploadImageModal";
-import { Button } from "antd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
+import { apiGet, apiPost, apiDelete } from "@/app/lib/api";
 
-export default function SocialPage() {
-  const [open, setOpen] = useState(false);
-  const [images, setImages] = useState<string[]>([
-    "/demo1.jpg",
-    "/demo2.jpg",
-    "/demo3.jpg",
-  ]);
+/* ================= TYPES ================= */
+
+type Comment = {
+  id: string;
+  comment: string;
+  user?: { name: string };
+  replies?: Comment[];
+};
+
+type SocialPost = {
+  id: string;
+  url: string;
+  caption?: string;
+  likesCount: number;
+  comments: Comment[];
+};
+
+/* ================= PAGE ================= */
+
+export default function BusinessSocialDashboard() {
+  const [posts, setPosts] = useState<SocialPost[]>([]);
+  const [caption, setCaption] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [replyText, setReplyText] = useState<Record<string, string>>({});
+
+  /* ================= LOAD POSTS ================= */
+
+  useEffect(() => {
+    loadPosts();
+  }, []);
+
+  async function loadPosts() {
+    const res = await apiGet("/social/me");
+    setPosts(res || []);
+  }
+
+  /* ================= UPLOAD ================= */
+
+  async function uploadPost() {
+    if (!file) return alert("Select an image");
+
+    const form = new FormData();
+    form.append("file", file);
+    if (caption) form.append("caption", caption);
+
+    setUploading(true);
+    await apiPost("/social/upload", form);
+    setCaption("");
+    setFile(null);
+    setUploading(false);
+    loadPosts();
+  }
+
+  /* ================= DELETE ================= */
+
+  async function deletePost(postId: string) {
+    if (!confirm("Delete this post?")) return;
+    await apiDelete(`/social/${postId}`);
+    setPosts((p) => p.filter((x) => x.id !== postId));
+  }
+
+  /* ================= REPLY ================= */
+
+  async function reply(commentId: string) {
+    if (!replyText[commentId]) return;
+
+    await apiPost(`/social/comment/${commentId}/reply`, {
+      comment: replyText[commentId],
+    });
+
+    setReplyText((r) => ({ ...r, [commentId]: "" }));
+    loadPosts();
+  }
+
+  /* ================= UI ================= */
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Social Branding</h2>
-        <Button
-          type="primary"
-          onClick={() => setOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          Upload Image
-        </Button>
-      </div>
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+      <h1 className="text-3xl font-bold">📸 Business Social</h1>
 
-      {/* Banner */}
-      <div className="relative h-56 w-full rounded-xl overflow-hidden shadow-md bg-gray-200">
-        <Image
-          src="/social-banner.jpg"
-          alt="Social Banner"
-          fill
-          className="object-cover opacity-90"
+      {/* ================= UPLOAD CARD ================= */}
+      <div className="bg-white rounded-2xl shadow p-5 space-y-4">
+        <h2 className="font-semibold text-lg">Create Post</h2>
+
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
         />
-        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-          <h3 className="text-white text-2xl font-semibold drop-shadow">
-            Build Your Social Presence
-          </h3>
+
+        <input
+          value={caption}
+          onChange={(e) => setCaption(e.target.value)}
+          placeholder="Write something..."
+          className="w-full border rounded-lg px-4 py-2"
+        />
+
+        <button
+          disabled={uploading}
+          onClick={uploadPost}
+          className="px-5 py-2 rounded-lg bg-indigo-600 text-white"
+        >
+          {uploading ? "Uploading..." : "Post"}
+        </button>
+      </div>
+
+      {/* ================= POSTS ================= */}
+      {posts.map((p) => (
+        <div
+          key={p.id}
+          className="bg-white rounded-2xl shadow overflow-hidden"
+        >
+          <Image
+            src={p.url}
+            alt="post"
+            width={1200}
+            height={600}
+            className="w-full h-80 object-cover"
+          />
+
+          <div className="p-4 space-y-3">
+            {p.caption && <p>{p.caption}</p>}
+
+            <div className="text-sm text-gray-600">
+              ❤️ {p.likesCount} · 💬 {p.comments.length}
+            </div>
+
+            <button
+              onClick={() => deletePost(p.id)}
+              className="text-sm text-red-600"
+            >
+              Delete Post
+            </button>
+
+            {/* COMMENTS */}
+            <div className="space-y-3 mt-4">
+              {p.comments.map((c) => (
+                <div key={c.id} className="text-sm">
+                  <b>{c.user?.name}:</b> {c.comment}
+
+                  {/* BUSINESS REPLY */}
+                  {c.replies?.map((r) => (
+                    <div
+                      key={r.id}
+                      className="ml-5 mt-1 p-2 bg-gray-100 rounded-lg"
+                    >
+                      <b className="text-indigo-600">Business:</b> {r.comment}
+                    </div>
+                  ))}
+
+                  {/* REPLY BOX */}
+                  <div className="flex gap-2 mt-2">
+                    <input
+                      value={replyText[c.id] || ""}
+                      onChange={(e) =>
+                        setReplyText((t) => ({
+                          ...t,
+                          [c.id]: e.target.value,
+                        }))
+                      }
+                      placeholder="Reply as business..."
+                      className="flex-1 border rounded px-2 py-1"
+                    />
+                    <button
+                      onClick={() => reply(c.id)}
+                      className="bg-indigo-600 text-white px-3 rounded"
+                    >
+                      Reply
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      ))}
 
-      {/* Gallery Section */}
-      <div>
-        <h3 className="text-xl font-semibold mb-3">Your Gallery</h3>
-        <ImageGallery images={images} />
-      </div>
-
-      {/* Upload Modal */}
-      <UploadImageModal
-        open={open}
-        onClose={() => setOpen(false)}
-        setImages={setImages}
-      />
+      {posts.length === 0 && (
+        <p className="text-center text-gray-500">
+          No posts yet. Start posting 🚀
+        </p>
+      )}
     </div>
   );
 }

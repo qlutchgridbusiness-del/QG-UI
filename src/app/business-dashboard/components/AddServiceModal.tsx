@@ -14,7 +14,7 @@ export default function AddServiceModal({ open, onClose, setServices }: any) {
     if (user?.id) {
       // 🔹 Step 2: Fetch business linked to this user
       axios
-        .get(`http://44.210.135.75:5001/business/owner/${user.id}`)
+        .get(`NEXT_PUBLIC_API_URL/business/owner/${user.id}`)
         .then((res) => {
           if (res.data?.id) setBusinessId(res.data.id);
         })
@@ -37,7 +37,7 @@ export default function AddServiceModal({ open, onClose, setServices }: any) {
       };
 
       const res = await axios.post(
-        `http://44.210.135.75:5001/business/${businessId}/services`,
+        `NEXT_PUBLIC_API_URL/business/${businessId}/services`,
         { services: [newService] }
       );
 

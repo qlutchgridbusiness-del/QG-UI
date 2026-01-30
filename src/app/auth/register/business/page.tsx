@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { apiPost, apiGet } from "@/app/lib/api"; // your file earlier
 import { UploadCard } from "@/app/business-dashboard/components/UploadCard";
+import BusinessPlanSelection from "./plans/page";
 
 type ServiceRow = {
   id: string;
@@ -136,6 +137,15 @@ export default function BusinessRegisterPage() {
   }, [services]);
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      // save intent
+      localStorage.setItem("redirectAfterLogin", "/business/register");
+      window.location.href = "/auth/login";
+    }
+  }, []);
+
+  useEffect(() => {
     if (addressQuery.length < 3) {
       setAddressResults([]);
       return;
@@ -184,7 +194,7 @@ export default function BusinessRegisterPage() {
   }
 
   function next() {
-    setStep((s) => Math.min(5, s + 1));
+    setStep((s) => Math.min(6, s + 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
   function prev() {
@@ -295,7 +305,6 @@ export default function BusinessRegisterPage() {
 
   async function submitAll() {
     const hasValidService = services.some((s) => s.name?.trim());
-
     if (!hasValidService) {
       alert("Please add at least one service");
       return;
@@ -303,41 +312,30 @@ export default function BusinessRegisterPage() {
 
     setSubmitting(true);
     try {
-      // 1) create business (if not created)
       let businessId = savedBusinessId;
+
       if (!businessId) {
-        const createBody = {
-          ...payload,
-        };
-        // sanitize openingHours if needed
-        const res = await apiPost("/business", createBody);
-        businessId = res?.id || res?.b_id || res?.business?.id;
+        const res = await apiPost("/business", payload);
+        businessId = res.id;
         setSavedBusinessId(businessId);
       }
 
-      // 2) push services
-      const servicesPayload = services.map((s) => ({
-        name: s.name,
-        price: s.price ?? null,
-        minPrice: s.minPrice ?? null,
-        maxPrice: s.maxPrice ?? null,
-        durationMinutes: s.durationMinutes ?? null,
-        available: s.available ?? true,
-      }));
       await apiPost(`/business/${businessId}/services`, {
-        services: servicesPayload,
+        services: services.map((s) => ({
+          name: s.name,
+          pricingType: s.pricingType,
+          price: s.price,
+          minPrice: s.minPrice,
+          maxPrice: s.maxPrice,
+          durationMinutes: s.durationMinutes,
+          available: s.available,
+        })),
       });
 
-      // clear drafts
-      localStorage.removeItem("business:register");
-      localStorage.removeItem("business:services");
-
-      alert("Business created successfully!");
-      // redirect to business dashboard
-      window.location.href = "/business-dashboard";
-    } catch (err) {
-      console.error(err);
-      alert("Failed to submit. See console.");
+      // 👇 MOVE TO PLAN SELECTION
+      setStep(6);
+    } catch (e) {
+      alert("Failed to submit business");
     } finally {
       setSubmitting(false);
     }
@@ -366,33 +364,38 @@ export default function BusinessRegisterPage() {
 
               <div className="bg-white/10 p-4 rounded-xl">
                 <ol className="space-y-3">
-                  {["Basics", "KYC", "Hours", "Media", "Services"].map(
-                    (label, i) => {
-                      const idx = i + 1;
-                      const active = step === idx;
-                      return (
-                        <li
-                          key={label}
-                          className={`flex items-start gap-3 ${
-                            active ? "text-white" : "text-white/90"
+                  {[
+                    "Basics",
+                    "KYC",
+                    "Hours",
+                    "Media",
+                    "Services",
+                    "Plan & Payment",
+                  ].map((label, i) => {
+                    const idx = i + 1;
+                    const active = step === idx;
+                    return (
+                      <li
+                        key={label}
+                        className={`flex items-start gap-3 ${
+                          active ? "text-white" : "text-white/90"
+                        }`}
+                      >
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            active
+                              ? "bg-white/20 ring-2 ring-white"
+                              : "bg-white/5"
                           }`}
                         >
-                          <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                              active
-                                ? "bg-white/20 ring-2 ring-white"
-                                : "bg-white/5"
-                            }`}
-                          >
-                            {idx}
-                          </div>
-                          <div className="text-sm">
-                            <div className="font-semibold">{label}</div>
-                          </div>
-                        </li>
-                      );
-                    }
-                  )}
+                          {idx}
+                        </div>
+                        <div className="text-sm">
+                          <div className="font-semibold">{label}</div>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ol>
               </div>
 
@@ -401,7 +404,7 @@ export default function BusinessRegisterPage() {
                 <div className="w-full bg-white/20 h-2 rounded mt-2">
                   <div
                     className="h-2 bg-white rounded"
-                    style={{ width: `${(step / 5) * 100}%` }}
+                    style={{ width: `${(step / 6) * 100}%` }}
                   />
                 </div>
               </div>
@@ -419,7 +422,7 @@ export default function BusinessRegisterPage() {
           <div className="col-span-12 lg:col-span-8 p-4 bg-white/95 backdrop-blur rounded-xl">
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Step {step} / 5</h3>
+                <h3 className="text-lg font-semibold">Step {step} / 6</h3>
                 <div className="text-sm text-gray-500">
                   {submitting ? "Saving..." : "Draft saved locally"}
                 </div>
@@ -919,7 +922,7 @@ export default function BusinessRegisterPage() {
                                   onChange={() =>
                                     updateService(s.id, {
                                       pricingType: opt.key as any,
-                                      fixedPrice: null,
+                                      price: null,
                                       minPrice: null,
                                       maxPrice: null,
                                     })
@@ -941,10 +944,10 @@ export default function BusinessRegisterPage() {
                               type="number"
                               min={0}
                               placeholder="e.g. 699"
-                              value={s.fixedPrice ?? ""}
+                              value={s.price ?? ""}
                               onChange={(e) =>
                                 updateService(s.id, {
-                                  fixedPrice: Number(e.target.value),
+                                  price: Number(e.target.value),
                                 })
                               }
                               className="w-full p-3 border rounded-lg"
@@ -1071,6 +1074,20 @@ export default function BusinessRegisterPage() {
                   </button>
                 </section>
               )}
+              {step === 6 && savedBusinessId && (
+                <section className="space-y-6">
+                  <h4 className="text-xl font-bold">Choose Your Plan</h4>
+
+                  <BusinessPlanSelection
+                    businessId={savedBusinessId}
+                    onActivated={() => {
+                      localStorage.removeItem("business:register");
+                      localStorage.removeItem("business:services");
+                      window.location.href = "/business-dashboard";
+                    }}
+                  />
+                </section>
+              )}
 
               {/* navigation */}
               <div className="pt-6 border-t mt-8">
@@ -1118,10 +1135,15 @@ export default function BusinessRegisterPage() {
 
                     {/* Publish – ONLY for step 5 */}
                     {step === 5 && (
-                      <button
-                        onClick={submitAll}
-                        disabled={submitting}
-                        className={`
+                      <>
+                        <p className="text-xs text-gray-500 text-center mt-2">
+                          Your business will go live after plan selection
+                        </p>
+
+                        <button
+                          onClick={submitAll}
+                          disabled={submitting}
+                          className={`
             w-full sm:w-auto px-6 py-3 rounded-lg text-white font-semibold
             ${
               submitting
@@ -1129,9 +1151,12 @@ export default function BusinessRegisterPage() {
                 : "bg-green-600 hover:bg-green-700"
             }
           `}
-                      >
-                        {submitting ? "Publishing..." : "Finish & Publish"}
-                      </button>
+                        >
+                          {submitting
+                            ? "Publishing..."
+                            : "Continue to plans ->"}
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>

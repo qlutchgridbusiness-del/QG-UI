@@ -1,106 +1,249 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Button, Spin, message } from "antd";
-import AddServiceModal from "../components/AddServiceModal";
-import ServiceList from "../components/ServiceList";
+import { useEffect, useState } from "react";
+import { Button, Modal, Input, Select, Switch, Spin } from "antd";
 import axios from "axios";
-import Image from "next/image";
+import { useRouter } from "next/navigation";
 
-export default function ServicesPage() {
-  const [open, setOpen] = useState(false);
-  const [services, setServices] = useState<any[]>([]);
+const { Option } = Select;
+
+type Service = {
+  id: string;
+  name: string;
+  pricingType: "FIXED" | "RANGE" | "QUOTE";
+  price?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  durationMinutes?: number;
+  available: boolean;
+};
+
+export default function BusinessServicesPage() {
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<Service | null>(null);
+  const [saving, setSaving] = useState(false);
+  const router = useRouter();
+
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+  /* ------------------------
+     LOAD BUSINESS SERVICES
+  ------------------------- */
+  async function loadServices() {
+    setLoading(true);
+    try {
+      // 1️⃣ Get my business
+      const businessRes = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/business/me`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const business = businessRes.data?.[0];
+      if (!business) {
+        setServices([]);
+        return;
+      }
+
+      // 2️⃣ Get services for business
+      const servicesRes = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/services`,
+        {
+          params: { businessId: business.id },
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      setServices(servicesRes.data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        const user = JSON.parse(localStorage.getItem("user") || "{}");
-        const token = localStorage.getItem("token");
-
-        if (!user?.id) {
-          message.error("User not logged in");
-          setLoading(false);
-          return;
-        }
-
-        // Fetch business
-        const businessRes = await axios.get("http://44.210.135.75:5001/business", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const currentBusiness = businessRes.data?.businesses?.find(
-          (b: any) => b.b_ownerId === user.id
-        );
-
-        if (!currentBusiness) {
-          message.warning("No business found for this user");
-          setLoading(false);
-          return;
-        }
-
-        // Fetch services
-        const serviceRes = await axios.get(
-          `http://44.210.135.75:5001/business/${currentBusiness.b_id}/services`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        setServices(serviceRes.data.services || []);
-      } catch (error) {
-        console.error("Error fetching services:", error);
-        message.error("Failed to load services");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchServices();
+    loadServices();
   }, []);
 
+  /* ------------------------
+     SAVE SERVICE (EDIT)
+  ------------------------- */
+  async function saveService() {
+    if (!editing) return;
+    setSaving(true);
+
+    try {
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL}/services/${editing.id}`,
+        editing,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      await loadServices();
+      setEditing(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  /* ------------------------
+     UI
+  ------------------------- */
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Your Services</h2>
-        <Button
-          type="primary"
-          onClick={() => setOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          + Add Service
-        </Button>
-      </div>
+      <Button
+        type="primary"
+        onClick={() => router.push("/business-dashboard/services/add")}
+      >
+        + Add Service
+      </Button>
 
-      {/* Banner */}
-      <div className="relative h-48 rounded-xl overflow-hidden shadow-lg bg-gray-200">
-        <Image
-          src="/services-banner.jpg"
-          alt="Services Banner"
-          fill
-          className="object-cover opacity-90"
-        />
-        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-          <h3 className="text-white text-xl md:text-2xl font-semibold drop-shadow">
-            Showcase Your Expert Services
-          </h3>
-        </div>
-      </div>
+      <h2 className="text-2xl font-semibold">Services</h2>
 
-      {/* Services List */}
-      {loading ? (
-        <div className="flex justify-center items-center h-40">
-          <Spin size="large" />
+      {services.length === 0 && (
+        <div className="text-gray-500">
+          No services added yet. Add from registration or settings.
         </div>
-      ) : services.length === 0 ? (
-        <div className="text-center text-gray-500 text-lg py-10">
-          No services added yet.
-        </div>
-      ) : (
-        <ServiceList services={services} />
       )}
 
-      {/* Add Modal */}
-      <AddServiceModal open={open} onClose={() => setOpen(false)} setServices={setServices} />
+      {/* SERVICE LIST */}
+      <div className="space-y-4">
+        {services.map((s) => (
+          <div
+            key={s.id}
+            className="bg-white border rounded-xl p-4 shadow-sm flex justify-between items-center"
+          >
+            <div>
+              <h3 className="font-semibold">{s.name}</h3>
+              <p className="text-sm text-gray-500">
+                {s.pricingType === "FIXED" && `₹${s.price}`}
+                {s.pricingType === "RANGE" && `₹${s.minPrice} – ₹${s.maxPrice}`}
+                {s.pricingType === "QUOTE" && "Quotation"}
+                {s.durationMinutes && ` • ${s.durationMinutes} mins`}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <Switch
+                checked={s.available}
+                onChange={async (checked) => {
+                  await axios.put(
+                    `${process.env.NEXT_PUBLIC_API_URL}/services/${s.id}`,
+                    { available: checked },
+                    {
+                      headers: { Authorization: `Bearer ${token}` },
+                    }
+                  );
+                  loadServices();
+                }}
+              />
+
+              <Button onClick={() => setEditing(s)}>Edit</Button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* EDIT MODAL */}
+      <Modal
+        open={!!editing}
+        title="Edit Service"
+        onCancel={() => setEditing(null)}
+        onOk={saveService}
+        confirmLoading={saving}
+      >
+        {editing && (
+          <div className="space-y-4">
+            <Input
+              value={editing.name}
+              onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+              placeholder="Service name"
+            />
+
+            <Select
+              value={editing.pricingType}
+              onChange={(v) =>
+                setEditing({
+                  ...editing,
+                  pricingType: v,
+                  price: undefined,
+                  minPrice: undefined,
+                  maxPrice: undefined,
+                })
+              }
+              className="w-full"
+            >
+              <Option value="FIXED">Fixed</Option>
+              <Option value="RANGE">Range</Option>
+              <Option value="QUOTE">Quotation</Option>
+            </Select>
+
+            {editing.pricingType === "FIXED" && (
+              <Input
+                type="number"
+                placeholder="Price"
+                value={editing.price}
+                onChange={(e) =>
+                  setEditing({
+                    ...editing,
+                    price: Number(e.target.value),
+                  })
+                }
+              />
+            )}
+
+            {editing.pricingType === "RANGE" && (
+              <>
+                <Input
+                  type="number"
+                  placeholder="Min price"
+                  value={editing.minPrice}
+                  onChange={(e) =>
+                    setEditing({
+                      ...editing,
+                      minPrice: Number(e.target.value),
+                    })
+                  }
+                />
+                <Input
+                  type="number"
+                  placeholder="Max price"
+                  value={editing.maxPrice}
+                  onChange={(e) =>
+                    setEditing({
+                      ...editing,
+                      maxPrice: Number(e.target.value),
+                    })
+                  }
+                />
+              </>
+            )}
+
+            <Input
+              type="number"
+              placeholder="Duration (minutes)"
+              value={editing.durationMinutes}
+              onChange={(e) =>
+                setEditing({
+                  ...editing,
+                  durationMinutes: Number(e.target.value),
+                })
+              }
+            />
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

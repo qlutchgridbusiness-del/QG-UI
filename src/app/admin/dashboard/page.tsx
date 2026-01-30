@@ -1,34 +1,66 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { StatCard } from "../components/StatCard";
+import { apiGet } from "@/app/lib/api";
+
+type DashboardStats = {
+  pendingKyc: number;
+  pendingContracts: number;
+  liveBusinesses: number;
+  totalUsers: number;
+};
 
 export default function AdminDashboard() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+
+  useEffect(() => {
+    apiGet("/admin/dashboard")
+      .then(setStats)
+      .catch(console.error);
+  }, []);
+
+  if (!stats) {
+    return (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="bg-gray-100 h-24 rounded-xl animate-pulse"
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <StatCard
         title="Pending KYC"
-        value={12}
+        value={stats.pendingKyc}
         color="yellow"
         href="/admin/kyc"
       />
 
       <StatCard
         title="Pending Contracts"
-        value={5}
+        value={stats.pendingContracts}
         color="indigo"
         href="/admin/contracts"
       />
 
       <StatCard
         title="Live Businesses"
-        value={34}
+        value={stats.liveBusinesses}
         color="green"
         href="/admin/businesses"
       />
 
       <StatCard
-        title="Rejected"
-        value={7}
+        title="Users"
+        value={stats.totalUsers}
         color="red"
-        href="/admin/kyc/rejected"
+        href="/admin/users"
       />
     </div>
   );

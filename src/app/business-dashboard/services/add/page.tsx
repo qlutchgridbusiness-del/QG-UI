@@ -1,0 +1,205 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Input, Select, Button, Switch, Spin } from "antd";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+
+const { Option } = Select;
+
+export default function AddServicePage() {
+  const router = useRouter();
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+  const [businessId, setBusinessId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [form, setForm] = useState({
+    name: "",
+    pricingType: "FIXED",
+    price: undefined as number | undefined,
+    minPrice: undefined as number | undefined,
+    maxPrice: undefined as number | undefined,
+    durationMinutes: 30,
+    available: true,
+  });
+
+  /* ---------------------------
+     LOAD BUSINESS ID
+  ---------------------------- */
+  useEffect(() => {
+    async function loadBusiness() {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/business/me`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (!res.data?.length) {
+          alert("No business found");
+          router.push("/business-dashboard");
+          return;
+        }
+
+        setBusinessId(res.data[0].id);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadBusiness();
+  }, []);
+
+  /* ---------------------------
+     SUBMIT SERVICE
+  ---------------------------- */
+  async function submit() {
+    if (!form.name.trim()) {
+      alert("Service name is required");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/business/${businessId}/services`,
+        {
+          services: [
+            {
+              name: form.name,
+              pricingType: form.pricingType,
+              price:
+                form.pricingType === "FIXED" ? form.price : undefined,
+              minPrice:
+                form.pricingType === "RANGE" ? form.minPrice : undefined,
+              maxPrice:
+                form.pricingType === "RANGE" ? form.maxPrice : undefined,
+              durationMinutes: form.durationMinutes,
+              available: form.available,
+            },
+          ],
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      router.push("/business-dashboard/services");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add service");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  /* ---------------------------
+     UI
+  ---------------------------- */
+  return (
+    <div className="max-w-xl space-y-6">
+      <h1 className="text-2xl font-semibold">Add New Service</h1>
+
+      <Input
+        placeholder="Service name (e.g. Full Car Wash)"
+        value={form.name}
+        onChange={(e) =>
+          setForm({ ...form, name: e.target.value })
+        }
+      />
+
+      <Select
+        value={form.pricingType}
+        className="w-full"
+        onChange={(v) =>
+          setForm({
+            ...form,
+            pricingType: v,
+            price: undefined,
+            minPrice: undefined,
+            maxPrice: undefined,
+          })
+        }
+      >
+        <Option value="FIXED">Fixed Price</Option>
+        <Option value="RANGE">Price Range</Option>
+        <Option value="QUOTE">Quotation</Option>
+      </Select>
+
+      {form.pricingType === "FIXED" && (
+        <Input
+          type="number"
+          placeholder="Price"
+          value={form.price}
+          onChange={(e) =>
+            setForm({ ...form, price: Number(e.target.value) })
+          }
+        />
+      )}
+
+      {form.pricingType === "RANGE" && (
+        <>
+          <Input
+            type="number"
+            placeholder="Minimum price"
+            value={form.minPrice}
+            onChange={(e) =>
+              setForm({ ...form, minPrice: Number(e.target.value) })
+            }
+          />
+          <Input
+            type="number"
+            placeholder="Maximum price"
+            value={form.maxPrice}
+            onChange={(e) =>
+              setForm({ ...form, maxPrice: Number(e.target.value) })
+            }
+          />
+        </>
+      )}
+
+      <Input
+        type="number"
+        placeholder="Duration (minutes)"
+        value={form.durationMinutes}
+        onChange={(e) =>
+          setForm({
+            ...form,
+            durationMinutes: Number(e.target.value),
+          })
+        }
+      />
+
+      <div className="flex items-center gap-3">
+        <Switch
+          checked={form.available}
+          onChange={(v) => setForm({ ...form, available: v })}
+        />
+        <span>Available for booking</span>
+      </div>
+
+      <div className="flex gap-3">
+        <Button onClick={() => router.back()}>
+          Cancel
+        </Button>
+        <Button
+          type="primary"
+          loading={saving}
+          onClick={submit}
+        >
+          Add Service
+        </Button>
+      </div>
+    </div>
+  );
+}

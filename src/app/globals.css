@@ -52,3 +52,31 @@ input[type="date"] {
   box-sizing: border-box;
 }
 
+@keyframes scaleIn {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.45s ease-out forwards;
+}
+
+.btn-green { @apply px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 }
+.btn-red { @apply px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 }
+.btn-indigo { @apply px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 }
+.btn-purple { @apply px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 }
+
+/* globals.css */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
