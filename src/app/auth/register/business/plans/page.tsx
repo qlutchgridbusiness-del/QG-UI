@@ -2,10 +2,10 @@
 import { apiPost } from "@/app/lib/api";
 
 const PLANS = [
-  { id: "FREE", name: "Free", price: 0 },
-  { id: "STARTER", name: "Starter", price: 999 },
-  { id: "GROWTH", name: "Growth", price: 2999 },
-  { id: "PRO", name: "Pro", price: 5999 },
+  { id: "STARTER", name: "Starter Plan", price: 0 },
+  { id: "STANDARD", name: "Standard Plan", price: 15000 },
+  { id: "GROWTH", name: "Growth Plan", price: 100000 },
+  { id: "ELITE", name: "Premier Partner Plan", price: 5999 },
 ];
 
 export default function PlansPage() {
