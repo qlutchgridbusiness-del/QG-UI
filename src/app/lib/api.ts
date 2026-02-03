@@ -1,6 +1,6 @@
 // app/lib/api.ts
 import axios from "axios";
-export const API_BASE = "http://44.210.135.75:5001";
+export const API_BASE = "https://44.210.135.75:5001";
 // src/app/services/bookingActions.ts
 function getToken(explicitToken?: string) {
   if (explicitToken) return explicitToken;
