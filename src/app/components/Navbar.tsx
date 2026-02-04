@@ -26,14 +26,18 @@ export default function Navbar() {
   } = useAuth();
 
   const isLoggedIn = !!user;
+  const hasTempAuth =
+    typeof window !== "undefined" &&
+    (localStorage.getItem("tempToken") ||
+      localStorage.getItem("verifiedPhone"));
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-white/90 dark:bg-slate-900/80 backdrop-blur border-b border-gray-200/70 dark:border-slate-800 shadow-sm">
+    <nav className="fixed top-0 left-0 w-full z-50 bg-white/95 dark:bg-slate-950/95 backdrop-blur border-b border-gray-200/80 dark:border-slate-800 shadow-sm">
       <div className="max-w-6xl mx-auto px-6 py-3 flex justify-between items-center">
         {/* LOGO */}
         <Link
           href="/"
-          className="text-2xl font-extrabold bg-gradient-to-r from-indigo-600 to-sky-500 bg-clip-text text-transparent"
+          className="text-2xl font-extrabold bg-gradient-to-r from-indigo-700 to-sky-500 bg-clip-text text-transparent"
         >
           QlutchGrid
         </Link>
@@ -43,23 +47,32 @@ export default function Navbar() {
           <button
             onClick={toggleTheme}
             aria-label="Toggle theme"
-            className="w-10 h-10 rounded-full border border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800 text-gray-700 dark:text-slate-200 flex items-center justify-center hover:shadow transition"
+            className="w-10 h-10 rounded-full border border-gray-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 text-gray-800 dark:text-slate-100 flex items-center justify-center hover:shadow transition"
           >
             {resolvedTheme === "dark" ? <FiSun /> : <FiMoon />}
           </button>
 
           {!isLoggedIn ? (
-            <button
-              onClick={() => router.push("/auth/login")}
-              className="px-5 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-sky-500 text-white font-semibold"
-            >
-              Get Started
-            </button>
+            hasTempAuth ? (
+              <button
+                onClick={() => router.push("/auth/register")}
+                className="px-5 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-sky-500 text-white font-semibold"
+              >
+                Continue Registration
+              </button>
+            ) : (
+              <button
+                onClick={() => router.push("/auth/login")}
+                className="px-5 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-sky-500 text-white font-semibold"
+              >
+                Get Started
+              </button>
+            )
           ) : (
             <div className="relative">
               <FaUserCircle
                 onClick={() => setOpen((v) => !v)}
-                className="text-3xl text-gray-700 dark:text-slate-200 cursor-pointer hover:text-indigo-600 transition"
+              className="text-3xl text-gray-800 dark:text-slate-100 cursor-pointer hover:text-indigo-600 transition"
               />
 
               <AnimatePresence>
