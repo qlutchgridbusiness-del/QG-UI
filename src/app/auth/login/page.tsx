@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { apiPost } from "@/app/lib/api";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   const [phone, setPhone] = useState("");
@@ -12,6 +12,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const registered = searchParams.get("registered") === "1";
 
   /* -------------------------
      Helpers
@@ -106,6 +108,12 @@ export default function LoginPage() {
         <h2 className="text-2xl font-bold text-center">
           {step === "PHONE" ? "Login / Register" : "Verify OTP"}
         </h2>
+
+        {registered && (
+          <div className="bg-green-50 text-green-700 p-3 rounded-lg text-sm">
+            Registration completed. Please login to access your profile.
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">

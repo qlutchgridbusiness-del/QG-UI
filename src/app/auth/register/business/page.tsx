@@ -1484,7 +1484,9 @@ export default function BusinessRegisterPage() {
                           localStorage.removeItem("business:register");
                           localStorage.removeItem("business:services");
                           localStorage.removeItem("businessId");
-                          window.location.href = "/business-dashboard";
+                          localStorage.removeItem("tempToken");
+                          localStorage.removeItem("verifiedPhone");
+                          window.location.href = "/auth/login?registered=1";
                         }}
                       />
                     </div>
