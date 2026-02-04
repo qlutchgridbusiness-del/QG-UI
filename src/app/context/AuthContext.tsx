@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 type User = {
   id: string;
   phone: string;
-  role: "user" | "business";
+  role: "USER" | "BUSINESS";
 };
 
 export type AuthContextType = {
@@ -16,6 +16,8 @@ export type AuthContextType = {
     role: "USER" | "BUSINESS";
   } | null;
 
+  token: string | null;
+
   isAuthenticated: boolean;
 
   role: "USER" | "BUSINESS";
@@ -25,10 +27,11 @@ export type AuthContextType = {
     name: string;
   }[];
 
-  activeBusinessId?: string | null;
+  activeBusinessId: string | null;
 
   switchToUser: () => void;
-  switchToBusiness: (businessId: string) => void;
+  login: (data: { token: string; user: User }) => void;
+  switchToBusiness: (businessId: string | null) => void;
   logout: () => void;
 };
 
@@ -84,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setActiveBusinessId(null);
   }
 
-  function switchBusiness(id: string | null) {
+  function switchToBusiness(id: string | null) {
     if (id) {
       localStorage.setItem("activeBusinessId", id);
     } else {
@@ -93,15 +96,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setActiveBusinessId(id);
   }
 
+  function switchToUser() {
+    switchToBusiness(null);
+  }
+
   return (
     <AuthContext.Provider
       value={{
         user,
         token,
+        isAuthenticated: Boolean(token),
+        role: user?.role ?? "USER",
+        businesses: [],
         activeBusinessId,
         login,
         logout,
-        switchBusiness,
+        switchToBusiness,
+        switchToUser,
       }}
     >
       {children}
