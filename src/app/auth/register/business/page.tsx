@@ -138,9 +138,10 @@ export default function BusinessRegisterPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) {
+    const tempToken = localStorage.getItem("tempToken");
+    if (!token && !tempToken) {
       // save intent
-      localStorage.setItem("redirectAfterLogin", "/business/register");
+      localStorage.setItem("redirectAfterLogin", "/auth/register/business");
       window.location.href = "/auth/login";
     }
   }, []);
@@ -312,10 +313,18 @@ export default function BusinessRegisterPage() {
 
     setSubmitting(true);
     try {
+      const authToken =
+        localStorage.getItem("token") || localStorage.getItem("tempToken");
+      if (!authToken) {
+        alert("Session expired. Please login again.");
+        window.location.href = "/auth/login";
+        return;
+      }
+
       let businessId = savedBusinessId;
 
       if (!businessId) {
-        const res = await apiPost("/business", payload);
+        const res = await apiPost("/business", payload, authToken);
         businessId = res.id;
         setSavedBusinessId(businessId);
       }
@@ -330,7 +339,7 @@ export default function BusinessRegisterPage() {
           durationMinutes: s.durationMinutes,
           available: s.available,
         })),
-      });
+      }, authToken);
 
       // 👇 MOVE TO PLAN SELECTION
       setStep(6);
