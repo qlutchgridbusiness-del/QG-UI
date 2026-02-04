@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-import { apiPost, apiGet } from "@/app/lib/api"; // your file earlier
+import { apiPost, apiGet, apiPut } from "@/app/lib/api"; // your file earlier
 import { UploadCard } from "@/app/business-dashboard/components/UploadCard";
 import BusinessPlanSelection from "./plans/page";
 
@@ -126,6 +126,20 @@ export default function BusinessRegisterPage() {
   });
 
   const [hydrated, setHydrated] = useState(false);
+  const [kycStatus, setKycStatus] = useState<{
+    panVerified: boolean;
+    gstVerified: boolean;
+    status?: string;
+  } | null>(null);
+  const [kycLoading, setKycLoading] = useState(false);
+  const [kycError, setKycError] = useState<string | null>(null);
+
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [signatureName, setSignatureName] = useState("");
+  const [termsSubmitting, setTermsSubmitting] = useState(false);
+  const [termsError, setTermsError] = useState<string | null>(null);
+  const [termsSubmitted, setTermsSubmitted] = useState(false);
+  const [stepError, setStepError] = useState<string | null>(null);
 
   useEffect(() => {
     // save draft locally
@@ -182,12 +196,168 @@ export default function BusinessRegisterPage() {
   }, []);
 
   useEffect(() => {
+    const existing = localStorage.getItem("businessId");
+    if (existing) {
+      setSavedBusinessId(existing);
+    }
+  }, []);
+
+  useEffect(() => {
     if (payload.address) {
       setAddressQuery(payload.address);
     }
   }, [payload.address]);
 
+  useEffect(() => {
+    if (step === 2 && savedBusinessId) {
+      fetchKycStatus(savedBusinessId);
+    }
+  }, [step, savedBusinessId]);
+
+  useEffect(() => {
+    if (step === 6 && savedBusinessId) {
+      fetchKycStatus(savedBusinessId);
+      loadTermsStatus(savedBusinessId);
+    }
+  }, [step, savedBusinessId]);
+
   if (!hydrated) return null;
+
+  function getAuthToken() {
+    return (
+      localStorage.getItem("token") || localStorage.getItem("tempToken")
+    );
+  }
+
+  async function ensureBusinessId() {
+    if (savedBusinessId) return savedBusinessId;
+
+    const authToken = getAuthToken();
+    if (!authToken) {
+      window.location.href = "/auth/login";
+      return null;
+    }
+
+    if (!payload.name?.trim()) {
+      setKycError("Business name is required before verification");
+      return null;
+    }
+
+    const res = await apiPost("/business", payload, authToken);
+    const id = res.id;
+    setSavedBusinessId(id);
+    localStorage.setItem("businessId", id);
+    return id;
+  }
+
+  async function fetchKycStatus(businessId: string) {
+    const authToken = getAuthToken();
+    if (!authToken) return;
+    try {
+      const res = await apiGet(`/business/${businessId}/kyc/status`, authToken);
+      setKycStatus({
+        panVerified: Boolean(res.panVerified),
+        gstVerified: Boolean(res.gstVerified),
+        status: res.status,
+      });
+    } catch {
+      setKycStatus(null);
+    }
+  }
+
+  async function verifyPan() {
+    setKycError(null);
+    if (!payload.pancard?.trim()) {
+      setKycError("Please enter PAN number first");
+      return;
+    }
+
+    setKycLoading(true);
+    try {
+      const businessId = await ensureBusinessId();
+      if (!businessId) return;
+      const authToken = getAuthToken();
+      await apiPost(
+        `/business/${businessId}/kyc/pan`,
+        { pan: payload.pancard.trim() },
+        authToken ?? undefined
+      );
+      await fetchKycStatus(businessId);
+    } catch (e: any) {
+      setKycError(e?.message || "PAN verification failed");
+    } finally {
+      setKycLoading(false);
+    }
+  }
+
+  async function verifyGst() {
+    setKycError(null);
+    if (!payload.gst?.trim()) {
+      setKycError("Please enter GST ID first");
+      return;
+    }
+
+    setKycLoading(true);
+    try {
+      const businessId = await ensureBusinessId();
+      if (!businessId) return;
+      const authToken = getAuthToken();
+      await apiPost(
+        `/business/${businessId}/kyc/gst`,
+        { gst: payload.gst.trim() },
+        authToken ?? undefined
+      );
+      await fetchKycStatus(businessId);
+    } catch (e: any) {
+      setKycError(e?.message || "GST verification failed");
+    } finally {
+      setKycLoading(false);
+    }
+  }
+
+  async function loadTermsStatus(businessId: string) {
+    const authToken = getAuthToken();
+    if (!authToken) return;
+    try {
+      const res = await apiGet(`/business/${businessId}`, authToken);
+      if (res?.termsAcceptedAt && res?.termsSignatureName) {
+        setTermsAccepted(true);
+        setSignatureName(res.termsSignatureName);
+        setTermsSubmitted(true);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  async function submitTerms() {
+    setTermsError(null);
+    if (!termsAccepted) {
+      setTermsError("Please accept the terms and conditions");
+      return;
+    }
+    if (!signatureName.trim()) {
+      setTermsError("Please enter your full name as signature");
+      return;
+    }
+
+    setTermsSubmitting(true);
+    try {
+      const businessId = await ensureBusinessId();
+      if (!businessId) return;
+      const authToken = getAuthToken();
+      await apiPost(
+        `/business/${businessId}/terms`,
+        { signatureName: signatureName.trim() },
+        authToken ?? undefined
+      );
+      setTermsSubmitted(true);
+    } catch (e: any) {
+      setTermsError(e?.message || "Failed to submit terms");
+    } finally {
+      setTermsSubmitting(false);
+    }
+  }
 
   /* ---------- Step handlers ---------- */
   function updatePayload(partial: Partial<BusinessPayload>) {
@@ -195,6 +365,12 @@ export default function BusinessRegisterPage() {
   }
 
   function next() {
+    if (step === 2 && !kycStatus?.panVerified) {
+      setStepError("Please verify PAN before continuing.");
+      return;
+    }
+
+    setStepError(null);
     setStep((s) => Math.min(6, s + 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -327,6 +503,9 @@ export default function BusinessRegisterPage() {
         const res = await apiPost("/business", payload, authToken);
         businessId = res.id;
         setSavedBusinessId(businessId);
+        localStorage.setItem("businessId", businessId);
+      } else {
+        await apiPut(`/business/${businessId}`, payload, authToken);
       }
 
       await apiPost(`/business/${businessId}/services`, {
@@ -601,6 +780,101 @@ export default function BusinessRegisterPage() {
                           Stored as: {maskAadhaar(payload.aadhaarCard)}
                         </p>
                       )}
+                    </div>
+                  </div>
+
+                  {kycError && (
+                    <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">
+                      {kycError}
+                    </div>
+                  )}
+
+                  {/* Verification status */}
+                  <div className="border rounded-xl p-4 bg-gray-50 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">PAN Verification</p>
+                        <p className="text-xs text-gray-500">
+                          {payload.pancard
+                            ? `Entered: ${maskPan(payload.pancard)}`
+                            : "Not entered"}
+                        </p>
+                      </div>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${
+                          kycStatus?.panVerified
+                            ? "bg-green-100 text-green-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
+                        {kycStatus?.panVerified ? "Verified" : "Not verified"}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={verifyPan}
+                      disabled={
+                        !payload.pancard ||
+                        kycLoading ||
+                        kycStatus?.panVerified
+                      }
+                      className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-60"
+                    >
+                      {kycLoading
+                        ? "Verifying..."
+                        : kycStatus?.panVerified
+                        ? "PAN Verified"
+                        : "Verify PAN"}
+                    </button>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">GST Verification</p>
+                        <p className="text-xs text-gray-500">
+                          {payload.gst ? `Entered: ${payload.gst}` : "Not entered"}
+                        </p>
+                      </div>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${
+                          kycStatus?.gstVerified
+                            ? "bg-green-100 text-green-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
+                        {kycStatus?.gstVerified ? "Verified" : "Not verified"}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={verifyGst}
+                      disabled={
+                        !payload.gst ||
+                        kycLoading ||
+                        kycStatus?.gstVerified
+                      }
+                      className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-60"
+                    >
+                      {kycLoading
+                        ? "Verifying..."
+                        : kycStatus?.gstVerified
+                        ? "GST Verified"
+                        : "Verify GST"}
+                    </button>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">Aadhaar</p>
+                        <p className="text-xs text-gray-500">
+                          {payload.aadhaarCard
+                            ? `Entered: ${maskAadhaar(payload.aadhaarCard)}`
+                            : "Not entered"}
+                        </p>
+                      </div>
+                      <span className="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-700">
+                        Verification pending
+                      </span>
                     </div>
                   </div>
 
@@ -1085,22 +1359,124 @@ export default function BusinessRegisterPage() {
               )}
               {step === 6 && savedBusinessId && (
                 <section className="space-y-6">
-                  <h4 className="text-xl font-bold">Choose Your Plan</h4>
+                  <h4 className="text-xl font-bold">Terms & Plan Selection</h4>
 
-                  <BusinessPlanSelection
-                    businessId={savedBusinessId}
-                    onActivated={() => {
-                      localStorage.removeItem("business:register");
-                      localStorage.removeItem("business:services");
-                      window.location.href = "/business-dashboard";
-                    }}
-                  />
+                  <div className="border rounded-xl p-5 bg-white space-y-3">
+                    <h5 className="font-semibold">Verification Summary</h5>
+                    <div className="flex items-center justify-between text-sm">
+                      <span>PAN</span>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${
+                          kycStatus?.panVerified
+                            ? "bg-green-100 text-green-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
+                        {kycStatus?.panVerified ? "Verified" : "Not verified"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span>GST</span>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${
+                          kycStatus?.gstVerified
+                            ? "bg-green-100 text-green-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
+                        {kycStatus?.gstVerified ? "Verified" : "Not verified"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Aadhaar</span>
+                      <span className="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-700">
+                        {payload.aadhaarCard ? "Entered" : "Not entered"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="border rounded-xl p-5 bg-gray-50 space-y-4">
+                    <div>
+                      <h5 className="font-semibold">Terms & Conditions</h5>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Please review and accept the business onboarding terms
+                        before choosing a plan. This acts as your digital
+                        signature.
+                      </p>
+                    </div>
+
+                    {termsError && (
+                      <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">
+                        {termsError}
+                      </div>
+                    )}
+
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={termsAccepted}
+                        onChange={(e) => setTermsAccepted(e.target.checked)}
+                      />
+                      I agree to the Terms & Conditions
+                    </label>
+                    <a
+                      href="/terms"
+                      className="text-sm text-indigo-600 hover:underline"
+                    >
+                      Read Terms & Conditions
+                    </a>
+
+                    <div>
+                      <label className="text-sm mb-1 block">
+                        Signature (Full Name)
+                      </label>
+                      <input
+                        value={signatureName}
+                        onChange={(e) => setSignatureName(e.target.value)}
+                        placeholder="Type your full name"
+                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={submitTerms}
+                      disabled={termsSubmitting || termsSubmitted}
+                      className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-60"
+                    >
+                      {termsSubmitting
+                        ? "Submitting..."
+                        : termsSubmitted
+                        ? "Terms Accepted"
+                        : "Sign & Continue"}
+                    </button>
+                  </div>
+
+                  {termsSubmitted && (
+                    <div>
+                      <h4 className="text-xl font-bold">Choose Your Plan</h4>
+                      <BusinessPlanSelection
+                        businessId={savedBusinessId}
+                        onActivated={() => {
+                          localStorage.removeItem("business:register");
+                          localStorage.removeItem("business:services");
+                          localStorage.removeItem("businessId");
+                          window.location.href = "/business-dashboard";
+                        }}
+                      />
+                    </div>
+                  )}
                 </section>
               )}
 
               {/* navigation */}
               <div className="pt-6 border-t mt-8">
                 <div className="flex flex-col sm:flex-row gap-3 sm:justify-between">
+                  {stepError && (
+                    <div className="w-full bg-red-50 text-red-700 p-3 rounded-lg text-sm">
+                      {stepError}
+                    </div>
+                  )}
                   {/* Back */}
                   {step > 1 && (
                     <button

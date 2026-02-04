@@ -1,36 +1,38 @@
-// src/app/terms/page.tsx
+"use client";
+
 export default function TermsPage() {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12 space-y-6 text-white">
-      <h1 className="text-3xl font-bold">Terms of Service</h1>
-      <p className="text-sm text-white-500">
-        Effective Date: July 20, 2025
-      </p>
+    <div className="min-h-screen bg-gray-50 px-4 py-12">
+      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow p-8 space-y-6">
+        <h1 className="text-2xl font-bold">Terms & Conditions</h1>
+        <p className="text-sm text-gray-600">
+          These terms govern your use of QlutchGrid as a business partner. By
+          accepting, you confirm that all information provided is accurate and
+          you agree to comply with platform policies and local regulations.
+        </p>
 
-      <p>
-        Welcome to QlutchGrid. These Terms govern your use of the platform.
-      </p>
-
-      <h2 className="font-semibold text-xl text-white">1. Overview</h2>
-      <p>
-        QlutchGrid enables booking of car care services provided by third-party businesses.
-      </p>
-
-      <h2 className="font-semibold text-xl text-white">5. Limitation of Liability</h2>
-      <p>
-        QlutchGrid acts only as a facilitator and is not responsible for service quality.
-      </p>
-
-      <h2 className="font-semibold text-xl">9. Governing Law</h2>
-      <p>
-        Governed by Indian laws. Jurisdiction: Chennai, Tamil Nadu.
-      </p>
-
-      <h2 className="font-semibold text-xl">10. Contact</h2>
-      <p>
-        RideLink Innovations Private Limited<br />
-        Email: business@qlutchgrid.com
-      </p>
+        <div className="space-y-4 text-sm text-gray-700">
+          <p>
+            1. You confirm you are authorized to operate the business and submit
+            documentation for verification.
+          </p>
+          <p>
+            2. You agree to provide accurate service pricing, availability, and
+            customer communications.
+          </p>
+          <p>
+            3. QlutchGrid may suspend or deactivate accounts that violate
+            policies, submit false information, or fail verification.
+          </p>
+          <p>
+            4. Payments for plans are non-refundable unless stated otherwise.
+          </p>
+          <p>
+            5. You consent to digital signature acceptance and electronic
+            record-keeping for onboarding.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
