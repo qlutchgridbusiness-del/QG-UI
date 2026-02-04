@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styles from "./BookingReceived.module.css";
+import { API_BASE } from "@/app/lib/api";
 
 interface Booking {
   id: string;
@@ -27,7 +28,7 @@ const BookingReceived: React.FC = () => {
   const fetchBookings = async () => {
     try {
       const res = await axios.get(
-        `NEXT_PUBLIC_API_URL/get-business-bookings?business_email=${businessEmail}`
+        `${API_BASE}/get-business-bookings?business_email=${businessEmail}`
       );
       const sorted = res.data.bookings
         .sort((a: Booking, b: Booking) => (a.status === "cancelled" ? 1 : -1))
@@ -41,7 +42,7 @@ const BookingReceived: React.FC = () => {
 
   const updateBooking = async (id: string, status: string, paymentStatus: string) => {
     try {
-      await axios.post("NEXT_PUBLIC_API_URL/update-business-booking", {
+      await axios.post(`${API_BASE}/update-business-booking`, {
         id,
         status: status === "denied by business" && paymentStatus === "paid" ? "Refund Processed..." : status,
       });
@@ -110,4 +111,3 @@ const BookingReceived: React.FC = () => {
     </div>
   );
 };
-

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Input, Select, Button, Switch, Spin } from "antd";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { API_BASE } from "@/app/lib/api";
 
 const { Option } = Select;
 
@@ -33,7 +34,7 @@ export default function AddServicePage() {
     async function loadBusiness() {
       try {
         const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/business/me`,
+          `${API_BASE}/business/me`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -66,7 +67,7 @@ export default function AddServicePage() {
     setSaving(true);
     try {
       await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/business/${businessId}/services`,
+        `${API_BASE}/business/${businessId}/services`,
         {
           services: [
             {

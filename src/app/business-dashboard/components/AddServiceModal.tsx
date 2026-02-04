@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { API_BASE } from "@/app/lib/api";
 
 export default function AddServiceModal({ open, onClose, setServices }: any) {
   const [name, setName] = useState("");
@@ -14,7 +15,7 @@ export default function AddServiceModal({ open, onClose, setServices }: any) {
     if (user?.id) {
       // 🔹 Step 2: Fetch business linked to this user
       axios
-        .get(`NEXT_PUBLIC_API_URL/business/owner/${user.id}`)
+        .get(`${API_BASE}/business/owner/${user.id}`)
         .then((res) => {
           if (res.data?.id) setBusinessId(res.data.id);
         })
@@ -37,7 +38,7 @@ export default function AddServiceModal({ open, onClose, setServices }: any) {
       };
 
       const res = await axios.post(
-        `NEXT_PUBLIC_API_URL/business/${businessId}/services`,
+        `${API_BASE}/business/${businessId}/services`,
         { services: [newService] }
       );
 

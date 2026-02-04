@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { API_BASE } from "@/app/lib/api";
 
 declare global {
   interface Window {
@@ -36,7 +37,7 @@ export default function RazorpayTestPage() {
 
     // 🔥 SEND RUPEES, NOT PAISE
     const orderRes = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/payments/create-order`,
+      `${API_BASE}/payments/create-order`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -58,7 +59,7 @@ export default function RazorpayTestPage() {
       order_id: order.orderId,
       handler: async (response: any) => {
         const verifyRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/payments/verify`,
+          `${API_BASE}/payments/verify`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

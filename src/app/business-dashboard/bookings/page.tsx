@@ -5,6 +5,7 @@ import axios from "axios";
 import { Spin, Modal, Input, Upload, Button, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { playNotificationSound } from "@/utils/sound";
+import { API_BASE } from "@/app/lib/api";
 
 // ---------------- TYPES ----------------
 export type BookingStatus =
@@ -75,7 +76,7 @@ export default function BusinessBookingsPage() {
       const token = localStorage.getItem("token");
 
       const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/business-bookings`,
+        `${API_BASE}/business-bookings`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -96,7 +97,7 @@ export default function BusinessBookingsPage() {
       const token = localStorage.getItem("token");
 
       await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/business-bookings/${id}/accept`,
+        `${API_BASE}/business-bookings/${id}/accept`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -118,7 +119,7 @@ export default function BusinessBookingsPage() {
       const token = localStorage.getItem("token");
 
       await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/business-bookings/${rejectingBooking.id}/reject`,
+        `${API_BASE}/business-bookings/${rejectingBooking.id}/reject`,
         { reason: rejectReason },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -147,7 +148,7 @@ export default function BusinessBookingsPage() {
 
     try {
       await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/business-bookings/${imageModal.booking.id}/${endpoint}`,
+        `${API_BASE}/business-bookings/${imageModal.booking.id}/${endpoint}`,
         fd,
         { headers: { Authorization: `Bearer ${token}` } }
       );

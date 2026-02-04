@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { API_BASE } from "@/app/lib/api";
 
 type PendingContract = {
   id: string;
@@ -26,7 +27,7 @@ export default function PendingContractsPage() {
       const token = localStorage.getItem("token");
 
       const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/contracts/pending`,
+        `${API_BASE}/admin/contracts/pending`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -60,7 +61,7 @@ export default function PendingContractsPage() {
       const token = localStorage.getItem("token");
 
       await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/contracts/${businessId}/${action}`,
+        `${API_BASE}/admin/contracts/${businessId}/${action}`,
         {},
         {
           headers: {

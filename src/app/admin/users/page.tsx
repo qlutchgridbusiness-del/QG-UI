@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE } from "@/app/lib/api";
 
 type User = {
   id: string;
@@ -21,7 +22,7 @@ export default function UsersPreview() {
         const token = localStorage.getItem("token");
 
         const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/admin/users`,
+          `${API_BASE}/admin/users`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/router";
 import styles from "./UserDashboard.module.css";
+import { API_BASE } from "@/app/lib/api";
 
 interface Business {
   email: string;
@@ -19,7 +20,7 @@ const UserDashboard: React.FC = () => {
 
   const fetchBusinesses = async () => {
     try {
-      const res = await axios.get("NEXT_PUBLIC_API_URL/get-businesses");
+      const res = await axios.get(`${API_BASE}/get-businesses`);
       setBusinesses(res.data.businesses);
     } catch (err) {
       console.error(err);

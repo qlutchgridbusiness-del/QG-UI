@@ -5,6 +5,7 @@ import { Button, TimePicker, InputNumber, Switch, message, DatePicker } from "an
 import dayjs from "dayjs";
 import axios from "axios";
 import dynamic from "next/dynamic";
+import { API_BASE } from "@/app/lib/api";
 
 const GoogleMap = dynamic(() => import("./MapRadius"), { ssr: false });
 
@@ -48,7 +49,7 @@ export default function BusinessSettingsPage() {
       const token = localStorage.getItem("token");
       const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-      const businessRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/business/me`, {
+      const businessRes = await axios.get(`${API_BASE}/business/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -122,7 +123,7 @@ export default function BusinessSettingsPage() {
       const token = localStorage.getItem("token");
 
       await axios.put(
-        `NEXT_PUBLIC_API_URL/business/${business.b_id}/settings`,
+        `${API_BASE}/business/${business.b_id}/settings`,
         {
           acceptingOrders,
           workingDays: selectedDays,

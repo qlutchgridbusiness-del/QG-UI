@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE } from "@/app/lib/api";
 
 type KycBusiness = {
   id: string;
@@ -29,7 +30,7 @@ export default function AdminKycPage() {
       const token = localStorage.getItem("token");
 
       const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/kyc/pending`,
+        `${API_BASE}/admin/kyc/pending`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -72,7 +73,7 @@ export default function AdminKycPage() {
       const token = localStorage.getItem("token");
 
       await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/kyc/${id}/${action}`,
+        `${API_BASE}/admin/kyc/${id}/${action}`,
         {},
         {
           headers: {

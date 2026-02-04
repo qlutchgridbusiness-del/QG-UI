@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE } from "@/app/lib/api";
 import Tabs from "@/app/components/Tabs";
 import { Button, Spin, Modal, Input } from "antd";
 import BusinessServicesPage from "./services/page";
@@ -104,7 +105,7 @@ function OrderDetails({
 
   async function action(type: "accept" | "reject" | "complete") {
     await axios.put(
-      `${process.env.NEXT_PUBLIC_API_URL}/business-bookings/${booking.id}/${type}`,
+      `${API_BASE}/business-bookings/${booking.id}/${type}`,
       type === "reject" ? { reason: rejectReason } : {},
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -200,7 +201,7 @@ export default function BusinessDashboard() {
       const token = localStorage.getItem("token");
 
       const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/business-bookings`,
+        `${API_BASE}/business-bookings`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

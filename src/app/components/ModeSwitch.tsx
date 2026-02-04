@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Dropdown, Menu, Button } from "antd";
 import { SwapOutlined, ShopOutlined, UserOutlined } from "@ant-design/icons";
 import axios from "axios";
+import { API_BASE } from "@/app/lib/api";
 
 export default function ModeSwitch() {
   const [mode, setMode] = useState<"USER" | "BUSINESS">("USER");
@@ -20,7 +21,7 @@ export default function ModeSwitch() {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/business/me`,
+        `${API_BASE}/business/me`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

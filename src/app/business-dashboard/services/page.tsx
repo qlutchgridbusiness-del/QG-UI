@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button, Modal, Input, Select, Switch, Spin } from "antd";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { API_BASE } from "@/app/lib/api";
 
 const { Option } = Select;
 
@@ -36,7 +37,7 @@ export default function BusinessServicesPage() {
     try {
       // 1️⃣ Get my business
       const businessRes = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/business/me`,
+        `${API_BASE}/business/me`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -48,7 +49,7 @@ export default function BusinessServicesPage() {
 
       // 2️⃣ Get services for business
       const servicesRes = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/services`,
+        `${API_BASE}/services`,
         {
           params: { businessId: business.id },
           headers: { Authorization: `Bearer ${token}` },
@@ -76,7 +77,7 @@ export default function BusinessServicesPage() {
 
     try {
       await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/services/${editing.id}`,
+        `${API_BASE}/services/${editing.id}`,
         editing,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -139,7 +140,7 @@ export default function BusinessServicesPage() {
                 checked={s.available}
                 onChange={async (checked) => {
                   await axios.put(
-                    `${process.env.NEXT_PUBLIC_API_URL}/services/${s.id}`,
+                    `${API_BASE}/services/${s.id}`,
                     { available: checked },
                     {
                       headers: { Authorization: `Bearer ${token}` },

@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE } from "@/app/lib/api";
 
 type Business = {
   id: string;
@@ -28,7 +29,7 @@ export default function AdminBusinessesPage() {
         const token = localStorage.getItem("token");
 
         const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/admin/businesses`,
+          `${API_BASE}/admin/businesses`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

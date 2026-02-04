@@ -853,7 +853,9 @@ export default function BusinessRegisterPage() {
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium">GST Verification (Optional)</p>
+                        <p className="font-medium">
+                          GST Verification (Optional)
+                        </p>
                         <p className="text-xs text-gray-500">
                           {payload.gst
                             ? `Entered: ${payload.gst}`
