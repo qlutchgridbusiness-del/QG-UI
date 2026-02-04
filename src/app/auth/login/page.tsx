@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { apiPost } from "@/app/lib/api";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/context/AuthContext";
 
 export default function LoginPage() {
   const [phone, setPhone] = useState("");
@@ -13,7 +12,6 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
   const router = useRouter();
-  const { login } = useAuth();
 
   /* -------------------------
      Helpers
@@ -70,15 +68,17 @@ export default function LoginPage() {
     try {
       const res = await apiPost("/auth/verify-otp", { phone, otp });
 
-      // 🆕 New user → go to register with tempToken
+      // 🆕 New user → go to register choice
       if (res.isNewUser) {
-        login(res);
+        const tempToken = res.tempToken ?? res.token ?? "";
+        if (tempToken) {
+          localStorage.setItem("tempToken", tempToken);
+        }
+        localStorage.setItem("verifiedPhone", phone);
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
 
-        router.push(
-          res.user.role === "BUSINESS"
-            ? "/business-dashboard"
-            : "/user-dashboard"
-        );
+        router.push("/auth/register");
 
         return;
       }
