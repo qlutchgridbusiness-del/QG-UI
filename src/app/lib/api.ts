@@ -1,6 +1,6 @@
 // app/lib/api.ts
 import axios from "axios";
-export const API_BASE = "https://api.qlutchgrid.com/";
+export const API_BASE = "https://api.qlutchgrid.com";
 // src/app/services/bookingActions.ts
 function getToken(explicitToken?: string) {
   if (explicitToken) return explicitToken;
