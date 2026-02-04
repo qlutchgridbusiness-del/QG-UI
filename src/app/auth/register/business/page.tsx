@@ -227,6 +227,16 @@ export default function BusinessRegisterPage() {
     return localStorage.getItem("token") || localStorage.getItem("tempToken");
   }
 
+  function isValidPan(pan: string) {
+    return /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan);
+  }
+
+  function isValidGst(gst: string) {
+    return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(
+      gst
+    );
+  }
+
   async function ensureBusinessId() {
     if (savedBusinessId) return savedBusinessId;
 
@@ -269,6 +279,10 @@ export default function BusinessRegisterPage() {
       setKycError("Please enter PAN number first");
       return;
     }
+    if (!isValidPan(payload.pancard.trim())) {
+      setKycError("PAN format looks invalid. Example: ABCDE1234F");
+      return;
+    }
 
     setKycLoading(true);
     try {
@@ -292,6 +306,10 @@ export default function BusinessRegisterPage() {
     setKycError(null);
     if (!payload.gst?.trim()) {
       setKycError("Please enter GST ID first");
+      return;
+    }
+    if (!isValidGst(payload.gst.trim().toUpperCase())) {
+      setKycError("GST format looks invalid. Example: 22AAAAA0000A1Z5");
       return;
     }
 
@@ -759,10 +777,15 @@ export default function BusinessRegisterPage() {
                       </label>
                       <input
                         value={payload.gst || ""}
-                        onChange={(e) => updatePayload({ gst: e.target.value })}
+                        onChange={(e) =>
+                          updatePayload({ gst: e.target.value.toUpperCase() })
+                        }
                         placeholder="22AAAAA0000A1Z5"
                         className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Optional — recommended for GST‑registered businesses.
+                      </p>
                     </div>
 
                     <div className="md:col-span-2">
@@ -830,7 +853,7 @@ export default function BusinessRegisterPage() {
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium">GST Verification</p>
+                        <p className="font-medium">GST Verification (Optional)</p>
                         <p className="text-xs text-gray-500">
                           {payload.gst
                             ? `Entered: ${payload.gst}`
@@ -844,24 +867,24 @@ export default function BusinessRegisterPage() {
                             : "bg-yellow-100 text-yellow-700"
                         }`}
                       >
-                        {kycStatus?.gstVerified ? "Verified" : "Not verified"}
+                        {kycStatus?.gstVerified ? "Verified" : "Optional"}
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={verifyGst}
-                      disabled={
-                        !payload.gst || kycLoading || kycStatus?.gstVerified
-                      }
-                      className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-60"
-                    >
-                      {kycLoading
-                        ? "Verifying..."
-                        : kycStatus?.gstVerified
-                        ? "GST Verified"
-                        : "Verify GST"}
-                    </button>
+                    {payload.gst && (
+                      <button
+                        type="button"
+                        onClick={verifyGst}
+                        disabled={kycLoading || kycStatus?.gstVerified}
+                        className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-60"
+                      >
+                        {kycLoading
+                          ? "Verifying..."
+                          : kycStatus?.gstVerified
+                          ? "GST Verified"
+                          : "Verify GST"}
+                      </button>
+                    )}
 
                     <div className="flex items-center justify-between">
                       <div>
@@ -1376,7 +1399,7 @@ export default function BusinessRegisterPage() {
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span>GST</span>
+                      <span>GST (Optional)</span>
                       <span
                         className={`text-xs px-2 py-1 rounded-full ${
                           kycStatus?.gstVerified
@@ -1384,7 +1407,7 @@ export default function BusinessRegisterPage() {
                             : "bg-yellow-100 text-yellow-700"
                         }`}
                       >
-                        {kycStatus?.gstVerified ? "Verified" : "Not verified"}
+                        {kycStatus?.gstVerified ? "Verified" : "Optional"}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
