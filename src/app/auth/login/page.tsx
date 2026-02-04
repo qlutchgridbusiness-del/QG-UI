@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { apiPost } from "@/app/lib/api";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/AuthContext";
 
 export default function LoginPage() {
   const [phone, setPhone] = useState("");
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
   const router = useRouter();
+  const { login } = useAuth();
 
   /* -------------------------
      Helpers
@@ -70,9 +72,14 @@ export default function LoginPage() {
 
       // 🆕 New user → go to register with tempToken
       if (res.isNewUser) {
-        localStorage.setItem("tempToken", res.tempToken);
-        localStorage.setItem("verifiedPhone", phone);
-        router.push("/auth/register");
+        login(res);
+
+        router.push(
+          res.user.role === "BUSINESS"
+            ? "/business-dashboard"
+            : "/user-dashboard"
+        );
+
         return;
       }
 
