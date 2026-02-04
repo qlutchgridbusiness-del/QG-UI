@@ -2,8 +2,8 @@
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-12">
-      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow p-8 space-y-6">
+    <div className="min-h-screen bg-gray-50 px-4 py-8 sm:py-12">
+      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow p-6 sm:p-8 space-y-6">
         <h1 className="text-2xl font-bold">Terms & Conditions</h1>
         <p className="text-sm text-gray-600">
           These terms govern your use of QlutchGrid as a business partner. By

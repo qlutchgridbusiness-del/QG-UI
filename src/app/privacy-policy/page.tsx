@@ -1,9 +1,10 @@
 // src/app/privacy-policy/page.tsx
 export default function PrivacyPolicyPage() {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12 space-y-6">
+    <div className="min-h-screen bg-gray-50 px-4 py-8 sm:py-12">
+      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow p-6 sm:p-8 space-y-6 text-gray-900">
       <h1 className="text-3xl font-bold">Privacy Policy</h1>
-      <p className="text-sm text-white-500">
+      <p className="text-sm text-gray-500">
         Effective Date: July 20, 2025
       </p>
 
@@ -35,6 +36,7 @@ export default function PrivacyPolicyPage() {
         Chennai, Tamil Nadu – 600096<br />
         Email: business@qlutchgrid.com
       </p>
+      </div>
     </div>
   );
 }

@@ -6,11 +6,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import { FaUserCircle } from "react-icons/fa";
 import { useState } from "react";
 import { useAuth } from "@/app/context/AuthContext";
+import { useTheme } from "@/app/context/ThemeContext";
+import { FiMoon, FiSun } from "react-icons/fi";
 
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { resolvedTheme, toggleTheme } = useTheme();
 
   const {
     user,
@@ -25,120 +28,130 @@ export default function Navbar() {
   const isLoggedIn = !!user;
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-white/90 backdrop-blur border-b shadow-sm">
+    <nav className="fixed top-0 left-0 w-full z-50 bg-white/90 dark:bg-slate-900/80 backdrop-blur border-b border-gray-200/70 dark:border-slate-800 shadow-sm">
       <div className="max-w-6xl mx-auto px-6 py-3 flex justify-between items-center">
         {/* LOGO */}
         <Link
           href="/"
-          className="text-2xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"
+          className="text-2xl font-extrabold bg-gradient-to-r from-indigo-600 to-sky-500 bg-clip-text text-transparent"
         >
           QlutchGrid
         </Link>
 
         {/* RIGHT SIDE */}
-        {!isLoggedIn ? (
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => router.push("/auth/login")}
-            className="px-5 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold"
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            className="w-10 h-10 rounded-full border border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800 text-gray-700 dark:text-slate-200 flex items-center justify-center hover:shadow transition"
           >
-            Get Started
+            {resolvedTheme === "dark" ? <FiSun /> : <FiMoon />}
           </button>
-        ) : (
-          <div className="relative">
-            <FaUserCircle
-              onClick={() => setOpen((v) => !v)}
-              className="text-3xl text-gray-700 cursor-pointer hover:text-indigo-600 transition"
-            />
 
-            <AnimatePresence>
-              {open && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute right-0 mt-3 w-64 bg-white rounded-xl shadow-xl border p-2"
-                >
-                  {/* USER SECTION */}
-                  <div className="px-4 py-2 text-xs text-gray-400 uppercase">
-                    User
-                  </div>
+          {!isLoggedIn ? (
+            <button
+              onClick={() => router.push("/auth/login")}
+              className="px-5 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-sky-500 text-white font-semibold"
+            >
+              Get Started
+            </button>
+          ) : (
+            <div className="relative">
+              <FaUserCircle
+                onClick={() => setOpen((v) => !v)}
+                className="text-3xl text-gray-700 dark:text-slate-200 cursor-pointer hover:text-indigo-600 transition"
+              />
 
-                  <NavItem
-                    label="User Dashboard"
-                    onClick={() => {
-                      setOpen(false);
-                      router.push("/user-dashboard");
-                    }}
-                  />
+              <AnimatePresence>
+                {open && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 mt-3 w-64 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 p-2"
+                  >
+                    {/* USER SECTION */}
+                    <div className="px-4 py-2 text-xs text-gray-400 uppercase">
+                      User
+                    </div>
 
-                  <NavItem
-                    label="My Profile"
-                    onClick={() => {
-                      setOpen(false);
-                      router.push("/user-dashboard/profile");
-                    }}
-                  />
-
-                  <NavItem
-                    label="Orders"
-                    onClick={() => {
-                      setOpen(false);
-                      router.push("/user-dashboard/orders");
-                    }}
-                  />
-
-                  {role === "BUSINESS" && (
-                    <ActionItem
-                      label="Switch to User Mode"
+                    <NavItem
+                      label="User Dashboard"
                       onClick={() => {
                         setOpen(false);
-                        switchToUser();
                         router.push("/user-dashboard");
                       }}
                     />
-                  )}
 
-                  {/* BUSINESS SECTION */}
-                  {businesses?.length > 0 && (
-                    <>
-                      <Divider />
+                    <NavItem
+                      label="My Profile"
+                      onClick={() => {
+                        setOpen(false);
+                        router.push("/user-dashboard/profile");
+                      }}
+                    />
 
-                      <div className="px-4 py-2 text-xs text-gray-400 uppercase">
-                        Businesses
-                      </div>
+                    <NavItem
+                      label="Orders"
+                      onClick={() => {
+                        setOpen(false);
+                        router.push("/user-dashboard/orders");
+                      }}
+                    />
 
-                      {businesses.map((b) => (
-                        <NavItem
-                          key={b.id}
-                          label={b.name}
-                          active={b.id === activeBusinessId}
-                          onClick={() => {
-                            setOpen(false);
-                            switchToBusiness(b.id);
-                            router.push("/business-dashboard");
-                          }}
-                        />
-                      ))}
-                    </>
-                  )}
+                    {role === "BUSINESS" && (
+                      <ActionItem
+                        label="Switch to User Mode"
+                        onClick={() => {
+                          setOpen(false);
+                          switchToUser();
+                          router.push("/user-dashboard");
+                        }}
+                      />
+                    )}
 
-                  <Divider />
+                    {/* BUSINESS SECTION */}
+                    {businesses?.length > 0 && (
+                      <>
+                        <Divider />
 
-                  <ActionItem
-                    label="Logout"
-                    danger
-                    onClick={() => {
-                      setOpen(false);
-                      logout();
-                      router.push("/");
-                    }}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
+                        <div className="px-4 py-2 text-xs text-gray-400 uppercase">
+                          Businesses
+                        </div>
+
+                        {businesses.map((b) => (
+                          <NavItem
+                            key={b.id}
+                            label={b.name}
+                            active={b.id === activeBusinessId}
+                            onClick={() => {
+                              setOpen(false);
+                              switchToBusiness(b.id);
+                              router.push("/business-dashboard");
+                            }}
+                          />
+                        ))}
+                      </>
+                    )}
+
+                    <Divider />
+
+                    <ActionItem
+                      label="Logout"
+                      danger
+                      onClick={() => {
+                        setOpen(false);
+                        logout();
+                        router.push("/");
+                      }}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
       </div>
     </nav>
   );
@@ -161,8 +174,8 @@ function NavItem({
       className={`w-full text-left px-4 py-2 rounded-lg text-sm transition
         ${
           active
-            ? "bg-indigo-50 text-indigo-700 font-medium"
-            : "hover:bg-gray-100"
+            ? "bg-indigo-50 text-indigo-700 font-medium dark:bg-slate-800 dark:text-slate-200"
+            : "hover:bg-gray-100 dark:hover:bg-slate-800"
         }`}
     >
       {label}
@@ -185,8 +198,8 @@ function ActionItem({
       className={`w-full text-left px-4 py-2 rounded-lg text-sm transition
         ${
           danger
-            ? "text-red-600 hover:bg-red-50"
-            : "text-indigo-600 hover:bg-indigo-50"
+            ? "text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+            : "text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
         }`}
     >
       {label}
@@ -195,5 +208,5 @@ function ActionItem({
 }
 
 function Divider() {
-  return <div className="my-2 border-t border-gray-200" />;
+  return <div className="my-2 border-t border-gray-200 dark:border-slate-700" />;
 }

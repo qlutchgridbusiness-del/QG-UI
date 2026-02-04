@@ -9,7 +9,7 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-100 border-t border-gray-200">
+    <footer className="bg-gray-100/80 dark:bg-slate-900/80 border-t border-gray-200 dark:border-slate-800 backdrop-blur">
       <div className="max-w-6xl mx-auto px-4 py-5 space-y-4">
 
         {/* Social Icons */}
@@ -66,22 +66,22 @@ export default function Footer() {
         </div>
 
         {/* Legal + Contact Links */}
-        <div className="flex justify-center gap-4 text-xs sm:text-sm text-gray-500 flex-wrap">
-          <Link href="/contact-us" className="hover:text-gray-800">
+        <div className="flex justify-center gap-4 text-xs sm:text-sm text-gray-500 dark:text-slate-400 flex-wrap">
+          <Link href="/contact-us" className="hover:text-gray-800 dark:hover:text-slate-200">
             Contact Us
           </Link>
           <span>•</span>
-          <Link href="/privacy-policy" className="hover:text-gray-800">
+          <Link href="/privacy-policy" className="hover:text-gray-800 dark:hover:text-slate-200">
             Privacy Policy
           </Link>
           <span>•</span>
-          <Link href="/terms" className="hover:text-gray-800">
+          <Link href="/terms" className="hover:text-gray-800 dark:hover:text-slate-200">
             Terms & Conditions
           </Link>
         </div>
 
         {/* Copyright */}
-        <div className="text-center text-gray-500 text-xs sm:text-sm">
+        <div className="text-center text-gray-500 dark:text-slate-400 text-xs sm:text-sm">
           © {new Date().getFullYear()}{" "}
           <span className="font-semibold">QlutchGrid</span> — All Rights Reserved.
         </div>

@@ -224,9 +224,7 @@ export default function BusinessRegisterPage() {
   if (!hydrated) return null;
 
   function getAuthToken() {
-    return (
-      localStorage.getItem("token") || localStorage.getItem("tempToken")
-    );
+    return localStorage.getItem("token") || localStorage.getItem("tempToken");
   }
 
   async function ensureBusinessId() {
@@ -508,17 +506,21 @@ export default function BusinessRegisterPage() {
         await apiPut(`/business/${businessId}`, payload, authToken);
       }
 
-      await apiPost(`/business/${businessId}/services`, {
-        services: services.map((s) => ({
-          name: s.name,
-          pricingType: s.pricingType,
-          price: s.price,
-          minPrice: s.minPrice,
-          maxPrice: s.maxPrice,
-          durationMinutes: s.durationMinutes,
-          available: s.available,
-        })),
-      }, authToken);
+      await apiPost(
+        `/business/${businessId}/services`,
+        {
+          services: services.map((s) => ({
+            name: s.name,
+            pricingType: s.pricingType,
+            price: s.price,
+            minPrice: s.minPrice,
+            maxPrice: s.maxPrice,
+            durationMinutes: s.durationMinutes,
+            available: s.available,
+          })),
+        },
+        authToken
+      );
 
       // 👇 MOVE TO PLAN SELECTION
       setStep(6);
@@ -534,9 +536,9 @@ export default function BusinessRegisterPage() {
     <div
       className="
     min-h-screen bg-white
-    px-0 py-0
+    px-4 py-6
     lg:bg-gradient-to-br lg:from-gray-50 lg:to-gray-100
-    lg:px-4 lg:py-12
+    sm:px-6 lg:px-4 lg:py-12
   "
     >
       <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
@@ -815,9 +817,7 @@ export default function BusinessRegisterPage() {
                       type="button"
                       onClick={verifyPan}
                       disabled={
-                        !payload.pancard ||
-                        kycLoading ||
-                        kycStatus?.panVerified
+                        !payload.pancard || kycLoading || kycStatus?.panVerified
                       }
                       className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-60"
                     >
@@ -832,7 +832,9 @@ export default function BusinessRegisterPage() {
                       <div>
                         <p className="font-medium">GST Verification</p>
                         <p className="text-xs text-gray-500">
-                          {payload.gst ? `Entered: ${payload.gst}` : "Not entered"}
+                          {payload.gst
+                            ? `Entered: ${payload.gst}`
+                            : "Not entered"}
                         </p>
                       </div>
                       <span
@@ -850,9 +852,7 @@ export default function BusinessRegisterPage() {
                       type="button"
                       onClick={verifyGst}
                       disabled={
-                        !payload.gst ||
-                        kycLoading ||
-                        kycStatus?.gstVerified
+                        !payload.gst || kycLoading || kycStatus?.gstVerified
                       }
                       className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-60"
                     >

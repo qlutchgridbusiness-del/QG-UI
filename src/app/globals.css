@@ -1,8 +1,37 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --surface: #ffffff;
+  --surface-muted: #f1f5f9;
+  --border: #e2e8f0;
+  --text-muted: #64748b;
+  --accent: #4f46e5;
+  --app-bg: radial-gradient(
+      1200px 600px at 10% -10%,
+      rgba(79, 70, 229, 0.08),
+      transparent 60%
+    ),
+    linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+  --app-overlay: transparent;
+}
+
+html.dark {
+  --background: #0b1220;
+  --foreground: #e2e8f0;
+  --surface: #111827;
+  --surface-muted: #0f172a;
+  --border: #1f2937;
+  --text-muted: #94a3b8;
+  --accent: #38bdf8;
+  --app-bg: radial-gradient(
+      1200px 600px at 10% -10%,
+      rgba(56, 189, 248, 0.12),
+      transparent 60%
+    ),
+    linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
+  --app-overlay: rgba(0, 0, 0, 0.35);
 }
 
 @theme inline {
@@ -12,38 +41,47 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: light;
 }
 
-/* GLOBAL HERO BACKGROUND */
-body{
-  background: linear-gradient(
-    135deg,
-    #0f2a44 0%,
-    #1e3a5f 50%,
-    #2c4b63 100%
-  );
+html.dark {
+  color-scheme: dark;
+}
+
+html.theme-transition,
+html.theme-transition * {
+  transition-property: background-color, color, border-color, fill, stroke,
+    box-shadow, text-shadow, opacity;
+  transition-duration: 280ms;
+  transition-timing-function: ease-in-out;
+}
+
+body {
+  background: var(--app-bg);
   background-attachment: fixed;
+  color: var(--foreground);
 }
 
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--app-overlay);
   pointer-events: none;
   z-index: -1;
 }
-input, select, textarea {
-  color: #111 !important;          /* dark text */
+
+input,
+select,
+textarea {
+  color: var(--foreground);
+  background-color: var(--surface);
 }
 
-input::placeholder, textarea::placeholder {
-  color: #666 !important;          /* dark placeholder */
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
 }
 
 input[type="time"],
