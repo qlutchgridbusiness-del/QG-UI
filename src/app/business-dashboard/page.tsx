@@ -55,27 +55,27 @@ function OrdersList({
         <div
           key={b.id}
           onClick={() => onSelect(b)}
-          className="bg-white border rounded-xl p-4 shadow-sm hover:shadow cursor-pointer"
+          className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow cursor-pointer"
         >
           <div className="flex justify-between items-center">
             <div>
-              <div className="font-semibold">
+              <div className="font-semibold text-gray-900 dark:text-slate-100">
                 {b.service.name}
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 dark:text-slate-400">
                 {b.user.name} • {b.user.phone}
               </div>
-              <div className="text-xs capitalize text-gray-600">
+              <div className="text-xs capitalize text-gray-600 dark:text-slate-400">
                 {b.status.toLowerCase()}
               </div>
             </div>
 
             <div className="text-right">
-              <div className="font-semibold">
+              <div className="font-semibold text-gray-900 dark:text-slate-100">
                 ₹{b.priceSnapshot ?? "-"}
               </div>
               {b.scheduledAt && (
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-500 dark:text-slate-400">
                   {new Date(b.scheduledAt).toLocaleString()}
                 </div>
               )}
@@ -115,29 +115,29 @@ function OrderDetails({
   }
 
   return (
-    <div className="bg-white border rounded-xl p-6 shadow">
+    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-6 shadow">
       <Button onClick={onBack} className="mb-4">
         ← Back
       </Button>
 
-      <h2 className="text-xl font-semibold mb-4">
+      <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-slate-100">
         Booking Details
       </h2>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-6 text-gray-700 dark:text-slate-300">
         <div>
-          <p><b>Customer:</b> {booking.user.name}</p>
-          <p><b>Phone:</b> {booking.user.phone}</p>
-          <p><b>Service:</b> {booking.service.name}</p>
-          <p><b>Duration:</b> {booking.service.durationMinutes} mins</p>
+          <p><b className="text-gray-900 dark:text-slate-100">Customer:</b> {booking.user.name}</p>
+          <p><b className="text-gray-900 dark:text-slate-100">Phone:</b> {booking.user.phone}</p>
+          <p><b className="text-gray-900 dark:text-slate-100">Service:</b> {booking.service.name}</p>
+          <p><b className="text-gray-900 dark:text-slate-100">Duration:</b> {booking.service.durationMinutes} mins</p>
         </div>
 
         <div>
-          <p><b>Status:</b> {booking.status}</p>
-          <p><b>Price:</b> ₹{booking.priceSnapshot}</p>
+          <p><b className="text-gray-900 dark:text-slate-100">Status:</b> {booking.status}</p>
+          <p><b className="text-gray-900 dark:text-slate-100">Price:</b> ₹{booking.priceSnapshot}</p>
           {booking.scheduledAt && (
             <p>
-              <b>Scheduled:</b>{" "}
+              <b className="text-gray-900 dark:text-slate-100">Scheduled:</b>{" "}
               {new Date(booking.scheduledAt).toLocaleString()}
             </p>
           )}
@@ -222,23 +222,23 @@ export default function BusinessDashboard() {
         <>
           {/* STATS */}
           <div className="grid md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white border rounded-xl p-4">
-              <p className="text-gray-500">Total</p>
-              <h3 className="text-2xl font-semibold">
+            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-4">
+              <p className="text-gray-500 dark:text-slate-400">Total</p>
+              <h3 className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
                 {bookings.length}
               </h3>
             </div>
 
-            <div className="bg-white border rounded-xl p-4">
-              <p className="text-gray-500">Pending</p>
-              <h3 className="text-2xl font-semibold">
+            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-4">
+              <p className="text-gray-500 dark:text-slate-400">Pending</p>
+              <h3 className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
                 {bookings.filter((b) => b.status === "REQUESTED").length}
               </h3>
             </div>
 
-            <div className="bg-white border rounded-xl p-4">
-              <p className="text-gray-500">Revenue</p>
-              <h3 className="text-2xl font-semibold">
+            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-4">
+              <p className="text-gray-500 dark:text-slate-400">Revenue</p>
+              <h3 className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
                 ₹ 0
               </h3>
             </div>
@@ -279,7 +279,7 @@ export default function BusinessDashboard() {
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-semibold mb-6">
+      <h1 className="text-3xl font-semibold mb-6 text-gray-900 dark:text-slate-100">
         Business Dashboard
       </h1>
 
