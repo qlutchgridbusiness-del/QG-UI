@@ -91,34 +91,29 @@ export default function Navbar() {
                     transition={{ duration: 0.15 }}
                     className="absolute right-0 mt-3 w-64 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 p-2"
                   >
-                    {/* USER SECTION */}
-                    <div className="px-4 py-2 text-xs text-gray-400 uppercase">
-                      User
-                    </div>
+                  <NavItem
+                    label="Dashboard"
+                    onClick={() => {
+                      setOpen(false);
+                      router.push("/user-dashboard");
+                    }}
+                  />
 
-                    <NavItem
-                      label="User Dashboard"
-                      onClick={() => {
-                        setOpen(false);
-                        router.push("/user-dashboard");
-                      }}
-                    />
+                  <NavItem
+                    label="Profile"
+                    onClick={() => {
+                      setOpen(false);
+                      router.push("/user-dashboard/profile");
+                    }}
+                  />
 
-                    <NavItem
-                      label="My Profile"
-                      onClick={() => {
-                        setOpen(false);
-                        router.push("/user-dashboard/profile");
-                      }}
-                    />
-
-                    <NavItem
-                      label="Orders"
-                      onClick={() => {
-                        setOpen(false);
-                        router.push("/user-dashboard/orders");
-                      }}
-                    />
+                  <NavItem
+                    label="Orders"
+                    onClick={() => {
+                      setOpen(false);
+                      router.push("/user-dashboard/orders");
+                    }}
+                  />
 
                     {role === "BUSINESS" && (
                       <ActionItem
