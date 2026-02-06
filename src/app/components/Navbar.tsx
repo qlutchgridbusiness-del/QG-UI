@@ -52,7 +52,7 @@ export default function Navbar() {
           <button
             onClick={toggleTheme}
             aria-label="Toggle theme"
-            className="w-10 h-10 rounded-full border border-gray-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 text-gray-800 dark:text-slate-100 flex items-center justify-center hover:shadow transition"
+            className="w-10 h-10 rounded-full border border-gray-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 text-gray-900 dark:text-slate-100 flex items-center justify-center hover:shadow transition"
           >
             {resolvedTheme === "dark" ? <FiSun /> : <FiMoon />}
           </button>
@@ -79,8 +79,8 @@ export default function Navbar() {
             <div className="relative">
               <FaUserCircle
                 onClick={() => setOpen((v) => !v)}
-              className="text-3xl text-gray-800 dark:text-slate-100 cursor-pointer hover:text-indigo-600 transition"
-              />
+              className="text-3xl text-gray-900 dark:text-slate-100 cursor-pointer hover:text-indigo-600 transition"
+            />
 
               <AnimatePresence>
                 {open && (
@@ -190,7 +190,7 @@ function NavItem({
         ${
           active
             ? "bg-indigo-50 text-indigo-700 font-medium dark:bg-slate-800 dark:text-slate-200"
-            : "hover:bg-gray-100 dark:hover:bg-slate-800"
+            : "text-gray-800 dark:text-slate-100 hover:bg-gray-100 dark:hover:bg-slate-800"
         }`}
     >
       {label}
@@ -214,7 +214,7 @@ function ActionItem({
         ${
           danger
             ? "text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-            : "text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+            : "text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
         }`}
     >
       {label}
