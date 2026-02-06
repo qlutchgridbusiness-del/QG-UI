@@ -9,7 +9,7 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-100/80 dark:bg-slate-900/80 border-t border-gray-200 dark:border-slate-800 backdrop-blur">
+    <footer className="mt-auto bg-gray-100/80 dark:bg-slate-900/80 border-t border-gray-200 dark:border-slate-800 backdrop-blur">
       <div className="max-w-6xl mx-auto px-4 py-5 space-y-4">
 
         {/* Social Icons */}

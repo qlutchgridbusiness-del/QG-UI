@@ -10,10 +10,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen">
+      <body className="min-h-screen flex flex-col">
         <ClientProviders>
           <Navbar />
-          <main className="pt-16">{children}</main>
+          <main className="pt-16 flex-1">{children}</main>
           <Footer />
         </ClientProviders>
       </body>
