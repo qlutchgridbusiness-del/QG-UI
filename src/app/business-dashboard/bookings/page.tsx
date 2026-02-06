@@ -9,14 +9,15 @@ import { API_BASE } from "@/app/lib/api";
 
 // ---------------- TYPES ----------------
 export type BookingStatus =
-  | "CREATED"
+  | "REQUESTED"
   | "BUSINESS_ACCEPTED"
+  | "BUSINESS_REJECTED"
   | "SERVICE_STARTED"
   | "SERVICE_COMPLETED"
   | "PAYMENT_PENDING"
   | "PAYMENT_COMPLETED"
   | "VEHICLE_DELIVERED"
-  | "REJECTED";
+  | "CANCELLED";
 
 type Booking = {
   id: string;
@@ -55,6 +56,7 @@ export default function BusinessBookingsPage() {
   }>({ open: false, booking: null, type: null });
 
   const [files, setFiles] = useState<File[]>([]);
+  const [serviceAmount, setServiceAmount] = useState("");
 
   function detectStatusChange(prev: Booking[], next: Booking[]) {
     for (const b of next) {
@@ -67,7 +69,7 @@ export default function BusinessBookingsPage() {
   }
 
   function updateReminder(next: Booking[]) {
-    const pending = next.filter((b) => b.status === "CREATED");
+    const pending = next.filter((b) => b.status === "REQUESTED");
     const pendingCount = pending.length;
 
     if (pendingCount > lastPendingCountRef.current) {
@@ -156,7 +158,7 @@ export default function BusinessBookingsPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      updateStatus(rejectingBooking.id, "REJECTED");
+      updateStatus(rejectingBooking.id, "BUSINESS_REJECTED");
       setRejectingBooking(null);
       setRejectReason("");
       message.success("Booking rejected");
@@ -172,29 +174,45 @@ export default function BusinessBookingsPage() {
     }
 
     const token = localStorage.getItem("token");
-    const fd = new FormData();
-    files.forEach((f) => fd.append("images", f));
-
     const endpoint =
       imageModal.type === "START" ? "start-service" : "complete-service";
 
     try {
-      await axios.post(
-        `${API_BASE}/business-bookings/${imageModal.booking.id}/${endpoint}`,
-        fd,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // Upload images to get URLs
+      const urls: string[] = [];
+      for (const file of files) {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await axios.post(`${API_BASE}/uploads/image`, fd, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        urls.push(res.data.url);
+      }
 
-      updateStatus(
-        imageModal.booking.id,
-        imageModal.type === "START" ? "SERVICE_STARTED" : "SERVICE_COMPLETED"
-      );
-
-      message.success(
-        imageModal.type === "START" ? "Service started" : "Service completed"
-      );
+      if (imageModal.type === "START") {
+        await axios.put(
+          `${API_BASE}/business-bookings/${imageModal.booking.id}/${endpoint}`,
+          { beforeImages: urls },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        updateStatus(imageModal.booking.id, "SERVICE_STARTED");
+        message.success("Service started");
+      } else {
+        if (!serviceAmount) {
+          message.warning("Enter service amount");
+          return;
+        }
+        await axios.put(
+          `${API_BASE}/business-bookings/${imageModal.booking.id}/${endpoint}`,
+          { afterImages: urls, amount: Number(serviceAmount) },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        updateStatus(imageModal.booking.id, "PAYMENT_PENDING");
+        message.success("Service completed");
+      }
 
       setFiles([]);
+      setServiceAmount("");
       setImageModal({ open: false, booking: null, type: null });
     } catch {
       message.error("Operation failed");
@@ -236,7 +254,7 @@ export default function BusinessBookingsPage() {
             </div>
 
             <div className="mt-4 flex gap-3 flex-wrap">
-              {b.status === "CREATED" && (
+              {b.status === "REQUESTED" && (
                 <>
                   <button
                     onClick={() => acceptBooking(b.id)}
@@ -318,6 +336,15 @@ export default function BusinessBookingsPage() {
         >
           <Button icon={<UploadOutlined />}>Upload Images</Button>
         </Upload>
+
+        {imageModal.type === "COMPLETE" && (
+          <Input
+            className="mt-3"
+            placeholder="Service amount (₹)"
+            value={serviceAmount}
+            onChange={(e) => setServiceAmount(e.target.value)}
+          />
+        )}
 
         <Button type="primary" className="mt-4 w-full" onClick={submitImages}>
           Submit

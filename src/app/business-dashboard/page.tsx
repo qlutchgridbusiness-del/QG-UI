@@ -14,7 +14,15 @@ import SocialPage from "./social/page";
 ------------------------------ */
 type Booking = {
   id: string;
-  status: "REQUESTED" | "ACCEPTED" | "REJECTED" | "COMPLETED";
+  status:
+    | "REQUESTED"
+    | "BUSINESS_ACCEPTED"
+    | "BUSINESS_REJECTED"
+    | "SERVICE_STARTED"
+    | "PAYMENT_PENDING"
+    | "PAYMENT_COMPLETED"
+    | "VEHICLE_DELIVERED"
+    | "CANCELLED";
   scheduledAt?: string;
   priceSnapshot?: number;
   user: {
@@ -103,7 +111,7 @@ function OrderDetails({
   const [rejectReason, setRejectReason] = useState("");
   const [rejectOpen, setRejectOpen] = useState(false);
 
-  async function action(type: "accept" | "reject" | "complete") {
+  async function action(type: "accept" | "reject") {
     await axios.put(
       `${API_BASE}/business-bookings/${booking.id}/${type}`,
       type === "reject" ? { reason: rejectReason } : {},
@@ -161,13 +169,11 @@ function OrderDetails({
           </>
         )}
 
-        {booking.status === "ACCEPTED" && (
-          <Button
-            type="primary"
-            onClick={() => action("complete")}
-          >
-            Mark Completed
-          </Button>
+        {booking.status === "BUSINESS_ACCEPTED" && (
+          <div className="text-sm text-gray-600 dark:text-slate-300">
+            Continue this booking in the Bookings tab to upload before/after
+            service images.
+          </div>
         )}
       </div>
 
