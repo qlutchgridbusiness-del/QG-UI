@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { Spin, Modal, Input, Upload, Button, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
@@ -40,6 +40,8 @@ type Booking = {
 export default function BusinessBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const reminderIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastPendingCountRef = useRef(0);
 
   const [rejectingBooking, setRejectingBooking] = useState<Booking | null>(
     null
@@ -54,13 +56,6 @@ export default function BusinessBookingsPage() {
 
   const [files, setFiles] = useState<File[]>([]);
 
-  // ---------------- POLLING ----------------
-  useEffect(() => {
-    loadBookings();
-    const interval = setInterval(loadBookings, 10000);
-    return () => clearInterval(interval);
-  }, []);
-
   function detectStatusChange(prev: Booking[], next: Booking[]) {
     for (const b of next) {
       const old = prev.find((p) => p.id === b.id);
@@ -68,6 +63,29 @@ export default function BusinessBookingsPage() {
         playNotificationSound();
         break;
       }
+    }
+  }
+
+  function updateReminder(next: Booking[]) {
+    const pending = next.filter((b) => b.status === "CREATED");
+    const pendingCount = pending.length;
+
+    if (pendingCount > lastPendingCountRef.current) {
+      // New booking arrived
+      playNotificationSound();
+    }
+
+    lastPendingCountRef.current = pendingCount;
+
+    if (pendingCount > 0 && !reminderIntervalRef.current) {
+      reminderIntervalRef.current = setInterval(() => {
+        playNotificationSound();
+      }, 20000);
+    }
+
+    if (pendingCount === 0 && reminderIntervalRef.current) {
+      clearInterval(reminderIntervalRef.current);
+      reminderIntervalRef.current = null;
     }
   }
 
@@ -82,6 +100,7 @@ export default function BusinessBookingsPage() {
 
       setBookings((prev) => {
         detectStatusChange(prev, res.data);
+        updateReminder(res.data);
         return res.data;
       });
     } catch {
@@ -90,6 +109,19 @@ export default function BusinessBookingsPage() {
       setLoading(false);
     }
   }
+
+  // ---------------- POLLING ----------------
+  useEffect(() => {
+    loadBookings();
+    const interval = setInterval(loadBookings, 10000);
+    return () => {
+      clearInterval(interval);
+      if (reminderIntervalRef.current) {
+        clearInterval(reminderIntervalRef.current);
+        reminderIntervalRef.current = null;
+      }
+    };
+  }, []);
 
   // ---------------- ACTIONS ----------------
   async function acceptBooking(id: string) {

@@ -2,6 +2,7 @@
 
 import { AuthProvider } from "@/app/context/AuthContext";
 import { ThemeProvider } from "@/app/context/ThemeContext";
+import PushNotifications from "@/app/components/PushNotifications";
 
 export default function ClientProviders({
   children,
@@ -10,7 +11,10 @@ export default function ClientProviders({
 }) {
   return (
     <ThemeProvider>
-      <AuthProvider>{children}</AuthProvider>
+      <AuthProvider>
+        <PushNotifications />
+        {children}
+      </AuthProvider>
     </ThemeProvider>
   );
 }
