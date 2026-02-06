@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { FaUserCircle } from "react-icons/fa";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 import { useTheme } from "@/app/context/ThemeContext";
 import { FiMoon, FiSun } from "react-icons/fi";
@@ -14,6 +14,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const { resolvedTheme, toggleTheme } = useTheme();
+  const [hasTempAuth, setHasTempAuth] = useState(false);
 
   const {
     user,
@@ -23,13 +24,17 @@ export default function Navbar() {
     switchToUser,
     switchToBusiness,
     logout,
+    isAuthenticated,
+    isAuthReady,
   } = useAuth();
 
-  const isLoggedIn = !!user;
-  const hasTempAuth =
-    typeof window !== "undefined" &&
-    (localStorage.getItem("tempToken") ||
-      localStorage.getItem("verifiedPhone"));
+  const isLoggedIn = isAuthenticated;
+
+  useEffect(() => {
+    const temp =
+      localStorage.getItem("tempToken") || localStorage.getItem("verifiedPhone");
+    setHasTempAuth(Boolean(temp));
+  }, []);
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-white/95 dark:bg-slate-950/95 backdrop-blur border-b border-gray-200/80 dark:border-slate-800 shadow-sm">
@@ -53,7 +58,9 @@ export default function Navbar() {
           </button>
 
           {!isLoggedIn ? (
-            hasTempAuth ? (
+            !isAuthReady ? (
+              <div className="w-32 h-10 rounded-full bg-gray-200/70 dark:bg-slate-800 animate-pulse" />
+            ) : hasTempAuth ? (
               <button
                 onClick={() => router.push("/auth/register")}
                 className="px-5 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-sky-500 text-white font-semibold"

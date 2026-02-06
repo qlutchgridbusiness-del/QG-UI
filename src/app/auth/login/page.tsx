@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { apiPost } from "@/app/lib/api";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/app/context/AuthContext";
 
 function LoginPageInner() {
   const [phone, setPhone] = useState("");
@@ -14,6 +15,7 @@ function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const registered = searchParams.get("registered") === "1";
+  const { login } = useAuth();
 
   /* -------------------------
      Helpers
@@ -88,6 +90,7 @@ function LoginPageInner() {
       // Existing user
       localStorage.setItem("token", res.token);
       localStorage.setItem("user", JSON.stringify(res.user));
+      login(res);
 
       router.push(
         res.user.role === "BUSINESS" ? "/business-dashboard" : "/user-dashboard"

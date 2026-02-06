@@ -19,6 +19,7 @@ export type AuthContextType = {
   token: string | null;
 
   isAuthenticated: boolean;
+  isAuthReady: boolean;
 
   role: "USER" | "BUSINESS";
 
@@ -41,6 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [activeBusinessId, setActiveBusinessId] = useState<string | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   /* ---------- LOAD FROM STORAGE ---------- */
   useEffect(() => {
@@ -65,6 +67,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (b && b !== "undefined") {
       setActiveBusinessId(b);
     }
+
+    setIsAuthReady(true);
   }, []);
 
   /* ---------- ACTIONS ---------- */
@@ -106,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         token,
         isAuthenticated: Boolean(token),
+        isAuthReady,
         role: user?.role ?? "USER",
         businesses: [],
         activeBusinessId,
