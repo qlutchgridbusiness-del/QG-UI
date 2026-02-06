@@ -61,18 +61,37 @@ export default function BookServicePage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    apiGet(`/services/${id}`)
-      .then(setService)
-      .catch(() => alert("Service not found"));
-  }, [id]);
-
-  useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) return;
-    // if this route is used to view booking details, attempt to load booking
-    if (typeof id === "string" && id.includes("-")) {
-      apiGet(`/bookings/${id}`, token).then(setBooking).catch(() => {});
-    }
+
+    const load = async () => {
+      // First try booking details (when coming from Orders)
+      if (token && typeof id === "string" && id.includes("-")) {
+        try {
+          const b = await apiGet(`/bookings/${id}`, token);
+          setBooking(b);
+          setService({
+            id: b.service.id,
+            name: b.service.name,
+            pricingType: "QUOTE",
+            business: {
+              id: b.business.id,
+              name: b.business.name,
+              address: b.business.address,
+            },
+          } as Service);
+          return;
+        } catch {
+          // fall through to service lookup
+        }
+      }
+
+      // Otherwise treat as service booking page
+      apiGet(`/services/${id}`)
+        .then(setService)
+        .catch(() => alert("Service not found"));
+    };
+
+    load();
   }, [id]);
 
   async function loadRazorpay() {
