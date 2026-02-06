@@ -101,9 +101,16 @@ export default function PlansPage({
       )}
 
       {PLANS.map((p) => (
-        <div key={p.id} className="border rounded-xl p-6">
-          <h3 className="text-xl font-bold">{p.name}</h3>
-          <p className="text-2xl my-3">₹{p.price}</p>
+        <div
+          key={p.id}
+          className="border border-gray-200 dark:border-slate-800 rounded-xl p-6 bg-white dark:bg-slate-900"
+        >
+          <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">
+            {p.name}
+          </h3>
+          <p className="text-2xl my-3 text-gray-900 dark:text-slate-100">
+            ₹{p.price}
+          </p>
           <button
             onClick={() => selectPlan(p.id)}
             disabled={loadingPlan === p.id}

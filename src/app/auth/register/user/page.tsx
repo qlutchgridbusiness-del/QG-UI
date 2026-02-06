@@ -83,9 +83,11 @@ export default function UserRegisterPage() {
      UI
   -------------------------- */
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="bg-white p-6 rounded-2xl shadow w-full max-w-md space-y-5">
-        <h2 className="text-2xl font-bold text-center">Complete Profile</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950 px-4">
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow w-full max-w-md space-y-5 border border-gray-200 dark:border-slate-800">
+        <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-slate-100">
+          Complete Profile
+        </h2>
 
         {error && (
           <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">
@@ -95,14 +97,14 @@ export default function UserRegisterPage() {
 
         <input
           placeholder="Full name"
-          className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+          className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
         />
 
         <input
           placeholder="Email (optional)"
-          className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+          className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
         />

@@ -553,13 +553,13 @@ export default function BusinessRegisterPage() {
   return (
     <div
       className="
-    min-h-screen bg-white
+    min-h-screen bg-white dark:bg-slate-950
     px-4 py-6
-    lg:bg-gradient-to-br lg:from-gray-50 lg:to-gray-100
+    lg:bg-gradient-to-br lg:from-gray-50 lg:to-gray-100 dark:lg:from-slate-950 dark:lg:to-slate-900
     sm:px-6 lg:px-4 lg:py-12
   "
     >
-      <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div className="max-w-5xl mx-auto bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-slate-800">
         <div className="grid grid-cols-12">
           {/* left visual panel */}
           <div className="col-span-12 lg:col-span-4 hidden lg:block bg-gradient-to-b from-indigo-600 via-purple-600 to-pink-600 text-white p-8 bg-white/95 backdrop-blur rounded-xl">
@@ -627,11 +627,11 @@ export default function BusinessRegisterPage() {
           </div>
 
           {/* right content panel */}
-          <div className="col-span-12 lg:col-span-8 p-4 bg-white/95 backdrop-blur rounded-xl">
+          <div className="col-span-12 lg:col-span-8 p-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur rounded-xl">
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Step {step} / 6</h3>
-                <div className="text-sm text-gray-500">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Step {step} / 6</h3>
+                <div className="text-sm text-gray-500 dark:text-slate-400">
                   {submitting ? "Saving..." : "Draft saved locally"}
                 </div>
               </div>
@@ -639,7 +639,7 @@ export default function BusinessRegisterPage() {
               {/* Step content */}
               {step === 1 && (
                 <section className="space-y-4">
-                  <h4 className="text-xl font-bold">Business basics</h4>
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-slate-100">Business basics</h4>
 
                   {/* Mobile: 1 col | Desktop: 2 col */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -647,27 +647,27 @@ export default function BusinessRegisterPage() {
                       value={payload.name || ""}
                       onChange={(e) => updatePayload({ name: e.target.value })}
                       placeholder="Business name"
-                      className="w-full p-3 border border-gray-300 rounded-lg
-          text-gray-900 placeholder-gray-500
-          focus:ring-2 focus:ring-indigo-500 outline-none"
+                      className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg
+          text-gray-900 dark:text-slate-100 placeholder-gray-500 dark:placeholder-slate-400
+          focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-slate-900"
                     />
 
                     <input
                       value={payload.phone || ""}
                       onChange={(e) => updatePayload({ phone: e.target.value })}
                       placeholder="Phone"
-                      className="w-full p-3 border border-gray-300 rounded-lg
-          text-gray-900 placeholder-gray-500
-          focus:ring-2 focus:ring-indigo-500 outline-none"
+                      className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg
+          text-gray-900 dark:text-slate-100 placeholder-gray-500 dark:placeholder-slate-400
+          focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-slate-900"
                     />
 
                     <input
                       value={payload.email || ""}
                       onChange={(e) => updatePayload({ email: e.target.value })}
                       placeholder="Email"
-                      className="w-full p-3 border border-gray-300 rounded-lg
-          text-gray-900 placeholder-gray-500
-          focus:ring-2 focus:ring-indigo-500 outline-none"
+                      className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg
+          text-gray-900 dark:text-slate-100 placeholder-gray-500 dark:placeholder-slate-400
+          focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-slate-900"
                     />
 
                     <div className="md:col-span-2">
@@ -696,7 +696,7 @@ export default function BusinessRegisterPage() {
             ${
               selected
                 ? "bg-indigo-600 text-white border-indigo-600"
-                : "bg-white text-gray-700 border-gray-300 hover:border-indigo-400"
+                : "bg-white text-gray-700 dark:text-slate-300 border-gray-300 hover:border-indigo-400"
             }
           `}
                             >
@@ -706,7 +706,7 @@ export default function BusinessRegisterPage() {
                         })}
                       </div>
 
-                      <p className="text-xs text-gray-500 mt-2">
+                      <p className="text-xs text-gray-500 dark:text-slate-400 mt-2">
                         You can select multiple categories
                       </p>
                     </div>
@@ -717,11 +717,11 @@ export default function BusinessRegisterPage() {
                         value={addressQuery}
                         onChange={(e) => setAddressQuery(e.target.value)}
                         placeholder="Search area, street, landmark…"
-                        className="w-full p-3 pl-10 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        className="w-full p-3 pl-10 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                       />
 
                       {addressResults.length > 0 && (
-                        <ul className="absolute z-20 bg-white border rounded-lg mt-1 w-full shadow max-h-60 overflow-auto">
+                        <ul className="absolute z-20 bg-white border border-gray-300 dark:border-slate-700 rounded-lg mt-1 w-full shadow max-h-60 overflow-auto">
                           {addressResults.map((r, i) => (
                             <li
                               key={i}
@@ -748,7 +748,7 @@ export default function BusinessRegisterPage() {
 
               {step === 2 && (
                 <section className="space-y-6">
-                  <h4 className="text-xl font-bold">KYC Verification</h4>
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-slate-100">KYC Verification</h4>
 
                   {/* Inputs */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -762,10 +762,10 @@ export default function BusinessRegisterPage() {
                           })
                         }
                         placeholder="ABCDE1234F"
-                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                       />
                       {payload.pancard && (
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
                           Stored as: {maskPan(payload.pancard)}
                         </p>
                       )}
@@ -781,9 +781,9 @@ export default function BusinessRegisterPage() {
                           updatePayload({ gst: e.target.value.toUpperCase() })
                         }
                         placeholder="22AAAAA0000A1Z5"
-                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                       />
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
                         Optional — recommended for GST‑registered businesses.
                       </p>
                     </div>
@@ -798,10 +798,10 @@ export default function BusinessRegisterPage() {
                           updatePayload({ aadhaarCard: e.target.value })
                         }
                         placeholder="XXXX XXXX 1234"
-                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                       />
                       {payload.aadhaarCard && (
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
                           Stored as: {maskAadhaar(payload.aadhaarCard)}
                         </p>
                       )}
@@ -815,11 +815,11 @@ export default function BusinessRegisterPage() {
                   )}
 
                   {/* Verification status */}
-                  <div className="border rounded-xl p-4 bg-gray-50 space-y-4">
+                  <div className="border border-gray-200 dark:border-slate-800 rounded-xl p-4 bg-gray-50 dark:bg-slate-900 space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium">PAN Verification</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-slate-400">
                           {payload.pancard
                             ? `Entered: ${maskPan(payload.pancard)}`
                             : "Not entered"}
@@ -856,7 +856,7 @@ export default function BusinessRegisterPage() {
                         <p className="font-medium">
                           GST Verification (Optional)
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-slate-400">
                           {payload.gst
                             ? `Entered: ${payload.gst}`
                             : "Not entered"}
@@ -891,13 +891,13 @@ export default function BusinessRegisterPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium">Aadhaar</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-slate-400">
                           {payload.aadhaarCard
                             ? `Entered: ${maskAadhaar(payload.aadhaarCard)}`
                             : "Not entered"}
                         </p>
                       </div>
-                      <span className="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-700">
+                      <span className="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-700 dark:text-slate-300">
                         Verification pending
                       </span>
                     </div>
@@ -918,7 +918,7 @@ export default function BusinessRegisterPage() {
                     />
                   </div>
 
-                  <p className="text-xs text-gray-500 text-center">
+                  <p className="text-xs text-gray-500 dark:text-slate-400 text-center">
                     🔒 Your documents are encrypted and used only for
                     verification
                   </p>
@@ -927,11 +927,11 @@ export default function BusinessRegisterPage() {
 
               {step === 3 && (
                 <section className="space-y-6">
-                  <h4 className="text-xl font-bold">Operating Hours</h4>
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-slate-100">Operating Hours</h4>
 
                   {/* DAY SELECTOR */}
                   <div>
-                    <p className="text-sm text-gray-600 mb-2">
+                    <p className="text-sm text-gray-600 dark:text-slate-400 mb-2">
                       Select working days
                     </p>
 
@@ -961,7 +961,7 @@ export default function BusinessRegisterPage() {
                 ${
                   isOpen
                     ? "bg-indigo-600 text-white border-indigo-600"
-                    : "bg-white text-gray-700 border-gray-300"
+                    : "bg-white text-gray-700 dark:text-slate-300 border-gray-300"
                 }
               `}
                           >
@@ -973,7 +973,7 @@ export default function BusinessRegisterPage() {
                   </div>
 
                   {/* WEEKDAY QUICK SET */}
-                  <div className="bg-gray-50 p-4 rounded-xl border">
+                  <div className="bg-gray-50 dark:bg-slate-900 p-4 rounded-xl border border-gray-200 dark:border-slate-800">
                     <p className="text-sm font-medium mb-3">
                       Weekday timing (Mon–Fri)
                     </p>
@@ -981,7 +981,7 @@ export default function BusinessRegisterPage() {
                     <div className="flex flex-col sm:flex-row gap-3 min-w-0">
                       <input
                         type="time"
-                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                         onChange={(e) => {
                           const updated = { ...payload.openingHours };
                           ["mon", "tue", "wed", "thu", "fri"].forEach((d) => {
@@ -998,7 +998,7 @@ export default function BusinessRegisterPage() {
 
                       <input
                         type="time"
-                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                         onChange={(e) => {
                           const updated = { ...payload.openingHours };
                           ["mon", "tue", "wed", "thu", "fri"].forEach((d) => {
@@ -1016,7 +1016,7 @@ export default function BusinessRegisterPage() {
                   </div>
 
                   {/* WEEKEND QUICK SET */}
-                  <div className="bg-gray-50 p-4 rounded-xl border">
+                  <div className="bg-gray-50 dark:bg-slate-900 p-4 rounded-xl border border-gray-200 dark:border-slate-800">
                     <p className="text-sm font-medium mb-3">
                       Weekend timing (Sat–Sun)
                     </p>
@@ -1024,7 +1024,7 @@ export default function BusinessRegisterPage() {
                     <div className="flex flex-col sm:flex-row gap-3 min-w-0">
                       <input
                         type="time"
-                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                         onChange={(e) => {
                           const updated = { ...payload.openingHours };
                           ["sat", "sun"].forEach((d) => {
@@ -1041,7 +1041,7 @@ export default function BusinessRegisterPage() {
 
                       <input
                         type="time"
-                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                         onChange={(e) => {
                           const updated = { ...payload.openingHours };
                           ["sat", "sun"].forEach((d) => {
@@ -1060,7 +1060,7 @@ export default function BusinessRegisterPage() {
 
                   {/* PER-DAY OVERRIDE */}
                   <div className="space-y-3">
-                    <p className="text-sm font-medium text-gray-700">
+                    <p className="text-sm font-medium text-gray-700 dark:text-slate-300">
                       Fine-tune per day (optional)
                     </p>
 
@@ -1088,7 +1088,7 @@ export default function BusinessRegisterPage() {
                                 },
                               });
                             }}
-                            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                           />
 
                           <input
@@ -1102,7 +1102,7 @@ export default function BusinessRegisterPage() {
                                 },
                               });
                             }}
-                            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                           />
                         </div>
                       );
@@ -1113,8 +1113,8 @@ export default function BusinessRegisterPage() {
 
               {step === 4 && (
                 <section className="space-y-6">
-                  <h4 className="text-xl font-bold">Logo & Cover Image</h4>
-                  <p className="text-sm text-gray-600">
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-slate-100">Logo & Cover Image</h4>
+                  <p className="text-sm text-gray-600 dark:text-slate-400">
                     Upload your brand logo and a cover image. These will be
                     visible to users while browsing your business.
                   </p>
@@ -1135,7 +1135,7 @@ export default function BusinessRegisterPage() {
                     <button
                       type="button"
                       onClick={() => logoInputRef.current?.click()}
-                      className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50 w-full"
+                      className="px-4 py-2 text-sm border border-gray-300 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 w-full text-gray-800 dark:text-slate-100"
                     >
                       {(payload as any).logoKeyPreview
                         ? "Change Logo"
@@ -1157,7 +1157,7 @@ export default function BusinessRegisterPage() {
                     <button
                       type="button"
                       onClick={() => coverInputRef.current?.click()}
-                      className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50 w-full"
+                      className="px-4 py-2 text-sm border border-gray-300 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 w-full text-gray-800 dark:text-slate-100"
                     >
                       {(payload as any).coverKeyPreview
                         ? "Change Cover Image"
@@ -1171,8 +1171,8 @@ export default function BusinessRegisterPage() {
                 <section className="space-y-6">
                   {/* Header */}
                   <div>
-                    <h4 className="text-xl font-bold">Services you offer</h4>
-                    <p className="text-sm text-gray-500">
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-slate-100">Services you offer</h4>
+                    <p className="text-sm text-gray-500 dark:text-slate-400">
                       Add services customers can book from your business
                     </p>
                   </div>
@@ -1182,11 +1182,11 @@ export default function BusinessRegisterPage() {
                     {services.map((s, index) => (
                       <div
                         key={s.id}
-                        className="rounded-xl border bg-gray-50 p-4 space-y-2"
+                        className="rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 p-4 space-y-2"
                       >
                         {/* Card header */}
                         <div className="flex items-center justify-between">
-                          <span className="font-semibold text-gray-800">
+                          <span className="font-semibold text-gray-800 dark:text-slate-100">
                             Service {index + 1}
                           </span>
                           <button
@@ -1204,12 +1204,12 @@ export default function BusinessRegisterPage() {
                             updateService(s.id, { name: e.target.value })
                           }
                           placeholder="Service name (e.g. Interior Cleaning)"
-                          className="w-full p-3 border rounded-lg"
+                          className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                         />
 
                         {/* Pricing type */}
                         <div className="space-y-2">
-                          <label className="text-sm font-medium text-gray-700">
+                          <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
                             Pricing type
                           </label>
 
@@ -1245,7 +1245,7 @@ export default function BusinessRegisterPage() {
                         {/* FIXED PRICE */}
                         {s.pricingType === "FIXED" && (
                           <div>
-                            <label className="text-sm text-gray-600 block mb-1">
+                            <label className="text-sm text-gray-600 dark:text-slate-400 block mb-1">
                               Fixed price
                             </label>
                             <input
@@ -1258,7 +1258,7 @@ export default function BusinessRegisterPage() {
                                   price: Number(e.target.value),
                                 })
                               }
-                              className="w-full p-3 border rounded-lg"
+                              className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                             />
                           </div>
                         )}
@@ -1266,7 +1266,7 @@ export default function BusinessRegisterPage() {
                         {/* PRICE RANGE */}
                         {s.pricingType === "RANGE" && (
                           <div className="space-y-4">
-                            <div className="text-sm text-gray-700">
+                            <div className="text-sm text-gray-700 dark:text-slate-300">
                               Price range:
                               <span className="font-semibold ml-1">
                                 ₹{s.minPrice ?? 100} – ₹{s.maxPrice ?? 3000}
@@ -1274,7 +1274,7 @@ export default function BusinessRegisterPage() {
                             </div>
 
                             <div>
-                              <label className="text-xs text-gray-500">
+                              <label className="text-xs text-gray-500 dark:text-slate-400">
                                 Minimum price
                               </label>
                               <input
@@ -1293,7 +1293,7 @@ export default function BusinessRegisterPage() {
                             </div>
 
                             <div>
-                              <label className="text-xs text-gray-500">
+                              <label className="text-xs text-gray-500 dark:text-slate-400">
                                 Maximum price
                               </label>
                               <input
@@ -1330,7 +1330,7 @@ export default function BusinessRegisterPage() {
 
                         {/* Duration + availability */}
                         <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
-                          <label className="text-sm font-medium text-gray-700">
+                          <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
                             Duration (minutes)
                           </label>
 
@@ -1344,7 +1344,7 @@ export default function BusinessRegisterPage() {
                                 durationMinutes: Number(e.target.value),
                               })
                             }
-                            className="w-full sm:w-48 p-3 border rounded-lg"
+                            className="w-full sm:w-48 p-3 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                           />
 
                           <label className="flex items-center gap-2 text-sm">
@@ -1384,10 +1384,10 @@ export default function BusinessRegisterPage() {
               )}
               {step === 6 && savedBusinessId && (
                 <section className="space-y-6">
-                  <h4 className="text-xl font-bold">Terms & Plan Selection</h4>
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-slate-100">Terms & Plan Selection</h4>
 
-                  <div className="border rounded-xl p-5 bg-white space-y-3">
-                    <h5 className="font-semibold">Verification Summary</h5>
+                  <div className="border border-gray-200 dark:border-slate-800 rounded-xl p-5 bg-white dark:bg-slate-900 space-y-3">
+                    <h5 className="font-semibold text-gray-900 dark:text-slate-100">Verification Summary</h5>
                     <div className="flex items-center justify-between text-sm">
                       <span>PAN</span>
                       <span
@@ -1414,16 +1414,16 @@ export default function BusinessRegisterPage() {
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span>Aadhaar</span>
-                      <span className="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-700">
+                      <span className="text-xs px-2 py-1 rounded-full bg-gray-200 dark:bg-slate-800 text-gray-700 dark:text-slate-200">
                         {payload.aadhaarCard ? "Entered" : "Not entered"}
                       </span>
                     </div>
                   </div>
 
-                  <div className="border rounded-xl p-5 bg-gray-50 space-y-4">
+                  <div className="border border-gray-200 dark:border-slate-800 rounded-xl p-5 bg-gray-50 dark:bg-slate-900 space-y-4">
                     <div>
-                      <h5 className="font-semibold">Terms & Conditions</h5>
-                      <p className="text-sm text-gray-600 mt-1">
+                      <h5 className="font-semibold text-gray-900 dark:text-slate-100">Terms & Conditions</h5>
+                      <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">
                         Please review and accept the business onboarding terms
                         before choosing a plan. This acts as your digital
                         signature.
@@ -1446,7 +1446,7 @@ export default function BusinessRegisterPage() {
                     </label>
                     <a
                       href="/terms"
-                      className="text-sm text-indigo-600 hover:underline"
+                      className="text-sm text-indigo-600 dark:text-indigo-300 hover:underline"
                     >
                       Read Terms & Conditions
                     </a>
@@ -1459,7 +1459,7 @@ export default function BusinessRegisterPage() {
                         value={signatureName}
                         onChange={(e) => setSignatureName(e.target.value)}
                         placeholder="Type your full name"
-                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                       />
                     </div>
 
@@ -1479,7 +1479,7 @@ export default function BusinessRegisterPage() {
 
                   {termsSubmitted && (
                     <div>
-                      <h4 className="text-xl font-bold">Choose Your Plan</h4>
+                      <h4 className="text-xl font-bold text-gray-900 dark:text-slate-100">Choose Your Plan</h4>
                       <BusinessPlanSelection
                         businessId={savedBusinessId}
                         onActivated={() => {
@@ -1497,7 +1497,7 @@ export default function BusinessRegisterPage() {
               )}
 
               {/* navigation */}
-              <div className="pt-6 border-t mt-8">
+              <div className="pt-6 border-t border-gray-200 dark:border-slate-800 mt-8">
                 <div className="flex flex-col sm:flex-row gap-3 sm:justify-between">
                   {stepError && (
                     <div className="w-full bg-red-50 text-red-700 p-3 rounded-lg text-sm">
@@ -1508,7 +1508,7 @@ export default function BusinessRegisterPage() {
                   {step > 1 && (
                     <button
                       onClick={prev}
-                      className="w-full sm:w-auto px-5 py-3 border rounded-lg text-gray-700"
+                      className="w-full sm:w-auto px-5 py-3 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-700 dark:text-slate-300"
                     >
                       Back
                     </button>
@@ -1529,7 +1529,7 @@ export default function BusinessRegisterPage() {
                           );
                           alert("Draft saved locally");
                         }}
-                        className="w-full sm:w-auto px-5 py-3 border rounded-lg text-gray-700"
+                        className="w-full sm:w-auto px-5 py-3 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-700 dark:text-slate-300"
                       >
                         Save draft
                       </button>
@@ -1548,7 +1548,7 @@ export default function BusinessRegisterPage() {
                     {/* Publish – ONLY for step 5 */}
                     {step === 5 && (
                       <>
-                        <p className="text-xs text-gray-500 text-center mt-2">
+                        <p className="text-xs text-gray-500 dark:text-slate-400 text-center mt-2">
                           Your business will go live after plan selection
                         </p>
 

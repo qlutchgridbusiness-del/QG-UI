@@ -106,9 +106,9 @@ function LoginPageInner() {
      UI
   -------------------------- */
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="bg-white p-6 rounded-2xl shadow w-full max-w-md space-y-5">
-        <h2 className="text-2xl font-bold text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950 px-4">
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow w-full max-w-md space-y-5 border border-gray-200 dark:border-slate-800">
+        <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-slate-100">
           {step === "PHONE" ? "Login / Register" : "Verify OTP"}
         </h2>
 
@@ -129,7 +129,7 @@ function LoginPageInner() {
           <>
             <input
               placeholder="Mobile number (10 digits)"
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+              className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
               value={phone}
               onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
               maxLength={10}
@@ -150,7 +150,7 @@ function LoginPageInner() {
           <>
             <input
               placeholder="Enter 6-digit OTP"
-              className="w-full p-3 border rounded-lg tracking-widest text-center text-lg focus:ring-2 focus:ring-green-500"
+              className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg tracking-widest text-center text-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
               value={otp}
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
               maxLength={6}
@@ -167,7 +167,7 @@ function LoginPageInner() {
             <button
               onClick={sendOtp}
               disabled={cooldown > 0 || loading}
-              className="w-full text-sm text-indigo-600 hover:underline disabled:text-gray-400"
+              className="w-full text-sm text-indigo-600 dark:text-indigo-300 hover:underline disabled:text-gray-400 dark:disabled:text-slate-500"
             >
               {cooldown > 0 ? `Resend OTP in ${cooldown}s` : "Resend OTP"}
             </button>
@@ -178,7 +178,7 @@ function LoginPageInner() {
                 setOtp("");
                 setError(null);
               }}
-              className="w-full text-sm text-gray-500 hover:underline"
+              className="w-full text-sm text-gray-500 dark:text-slate-400 hover:underline"
             >
               Change phone number
             </button>
