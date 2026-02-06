@@ -109,7 +109,9 @@ export default function AddServicePage() {
   ---------------------------- */
   return (
     <div className="max-w-xl space-y-6">
-      <h1 className="text-2xl font-semibold">Add New Service</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
+        Add New Service
+      </h1>
 
       <Input
         placeholder="Service name (e.g. Full Car Wash)"

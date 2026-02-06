@@ -110,10 +110,12 @@ export default function BusinessServicesPage() {
         + Add Service
       </Button>
 
-      <h2 className="text-2xl font-semibold">Services</h2>
+      <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
+        Services
+      </h2>
 
       {services.length === 0 && (
-        <div className="text-gray-500">
+        <div className="text-gray-500 dark:text-slate-400">
           No services added yet. Add from registration or settings.
         </div>
       )}
@@ -123,11 +125,13 @@ export default function BusinessServicesPage() {
         {services.map((s) => (
           <div
             key={s.id}
-            className="bg-white border rounded-xl p-4 shadow-sm flex justify-between items-center"
+            className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-4 shadow-sm flex justify-between items-center"
           >
             <div>
-              <h3 className="font-semibold">{s.name}</h3>
-              <p className="text-sm text-gray-500">
+              <h3 className="font-semibold text-gray-900 dark:text-slate-100">
+                {s.name}
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-slate-400">
                 {s.pricingType === "FIXED" && `₹${s.price}`}
                 {s.pricingType === "RANGE" && `₹${s.minPrice} – ₹${s.maxPrice}`}
                 {s.pricingType === "QUOTE" && "Quotation"}

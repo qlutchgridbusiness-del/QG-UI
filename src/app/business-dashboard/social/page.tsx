@@ -83,11 +83,15 @@ export default function BusinessSocialDashboard() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-      <h1 className="text-3xl font-bold">📸 Business Social</h1>
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">
+        📸 Business Social
+      </h1>
 
       {/* ================= UPLOAD CARD ================= */}
-      <div className="bg-white rounded-2xl shadow p-5 space-y-4">
-        <h2 className="font-semibold text-lg">Create Post</h2>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow p-5 space-y-4 border border-gray-200 dark:border-slate-800">
+        <h2 className="font-semibold text-lg text-gray-900 dark:text-slate-100">
+          Create Post
+        </h2>
 
         <input
           type="file"
@@ -99,7 +103,7 @@ export default function BusinessSocialDashboard() {
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
           placeholder="Write something..."
-          className="w-full border rounded-lg px-4 py-2"
+          className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
         />
 
         <button
@@ -115,7 +119,7 @@ export default function BusinessSocialDashboard() {
       {posts.map((p) => (
         <div
           key={p.id}
-          className="bg-white rounded-2xl shadow overflow-hidden"
+          className="bg-white dark:bg-slate-900 rounded-2xl shadow overflow-hidden border border-gray-200 dark:border-slate-800"
         >
           <Image
             src={p.url}
@@ -125,10 +129,12 @@ export default function BusinessSocialDashboard() {
             className="w-full h-80 object-cover"
           />
 
-          <div className="p-4 space-y-3">
-            {p.caption && <p>{p.caption}</p>}
+          <div className="p-4 space-y-3 text-gray-700 dark:text-slate-300">
+            {p.caption && (
+              <p className="text-gray-900 dark:text-slate-100">{p.caption}</p>
+            )}
 
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-slate-400">
               ❤️ {p.likesCount} · 💬 {p.comments.length}
             </div>
 
@@ -149,7 +155,7 @@ export default function BusinessSocialDashboard() {
                   {c.replies?.map((r) => (
                     <div
                       key={r.id}
-                      className="ml-5 mt-1 p-2 bg-gray-100 rounded-lg"
+                      className="ml-5 mt-1 p-2 bg-gray-100 dark:bg-slate-800 rounded-lg"
                     >
                       <b className="text-indigo-600">Business:</b> {r.comment}
                     </div>
@@ -166,7 +172,7 @@ export default function BusinessSocialDashboard() {
                         }))
                       }
                       placeholder="Reply as business..."
-                      className="flex-1 border rounded px-2 py-1"
+                      className="flex-1 border border-gray-300 dark:border-slate-700 rounded px-2 py-1 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                     />
                     <button
                       onClick={() => reply(c.id)}
@@ -183,7 +189,7 @@ export default function BusinessSocialDashboard() {
       ))}
 
       {posts.length === 0 && (
-        <p className="text-center text-gray-500">
+        <p className="text-center text-gray-500 dark:text-slate-400">
           No posts yet. Start posting 🚀
         </p>
       )}
