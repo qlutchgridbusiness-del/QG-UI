@@ -218,6 +218,9 @@ export default function BusinessRegisterPage() {
     if (step === 6 && savedBusinessId) {
       fetchKycStatus(savedBusinessId);
       loadTermsStatus(savedBusinessId);
+      if (!signatureName.trim() && payload?.name?.trim()) {
+        setSignatureName(payload.name.trim());
+      }
     }
   }, [step, savedBusinessId]);
 
@@ -366,6 +369,11 @@ export default function BusinessRegisterPage() {
         `/business/${businessId}/terms`,
         { signatureName: signatureName.trim() },
         authToken ?? undefined
+      );
+      localStorage.setItem("business:signatureName", signatureName.trim());
+      localStorage.setItem(
+        "business:signatureDate",
+        new Date().toLocaleDateString()
       );
       setTermsSubmitted(true);
     } catch (e: any) {
@@ -1445,7 +1453,7 @@ export default function BusinessRegisterPage() {
                       I agree to the Terms & Conditions
                     </label>
                     <a
-                      href="/terms"
+                      href="/terms/business"
                       className="text-sm text-indigo-600 dark:text-indigo-300 hover:underline"
                     >
                       Read Terms & Conditions

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { apiGet, apiPost } from "@/app/lib/api";
+import { playNotificationSound } from "@/utils/sound";
 
 type Service = {
   id: string;
@@ -59,6 +60,7 @@ export default function BookServicePage() {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [loading, setLoading] = useState(false);
+  const prevStatusRef = useRef<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -93,6 +95,27 @@ export default function BookServicePage() {
 
     load();
   }, [id]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token || !booking?.id) return;
+
+    const refresh = async () => {
+      try {
+        const updated = await apiGet(`/bookings/${booking.id}`, token);
+        if (prevStatusRef.current && prevStatusRef.current !== updated.status) {
+          playNotificationSound();
+        }
+        prevStatusRef.current = updated.status;
+        setBooking(updated);
+      } catch {
+        // ignore
+      }
+    };
+
+    const interval = setInterval(refresh, 10000);
+    return () => clearInterval(interval);
+  }, [booking?.id]);
 
   async function loadRazorpay() {
     return new Promise<void>((resolve, reject) => {
@@ -323,6 +346,20 @@ export default function BookServicePage() {
               className="w-full py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700"
             >
               Pay Now
+            </button>
+          )}
+
+          {booking.status === "PAYMENT_COMPLETED" && (
+            <button
+              onClick={async () => {
+                const token = localStorage.getItem("token");
+                if (!token) return;
+                await apiPost(`/bookings/${booking.id}/pickup-request`, {}, token);
+                alert("Pickup request sent to the business.");
+              }}
+              className="w-full py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
+            >
+              Confirm Pickup (Notify Business)
             </button>
           )}
         </div>

@@ -17,6 +17,7 @@ export default function UserRegisterPage() {
     name: "",
     email: "",
   });
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   /* -------------------------
      INIT: load temp auth state
@@ -47,6 +48,10 @@ export default function UserRegisterPage() {
 
     if (!form.name.trim()) {
       setError("Name is required");
+      return;
+    }
+    if (!termsAccepted) {
+      setError("Please accept the Terms & Conditions");
       return;
     }
 
@@ -108,6 +113,21 @@ export default function UserRegisterPage() {
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
         />
+
+        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300">
+          <input
+            type="checkbox"
+            checked={termsAccepted}
+            onChange={(e) => setTermsAccepted(e.target.checked)}
+          />
+          I agree to the Terms & Conditions
+        </label>
+        <a
+          href="/terms"
+          className="text-sm text-indigo-600 dark:text-indigo-300 hover:underline"
+        >
+          Read User Terms & Conditions
+        </a>
 
         <button
           onClick={submitRegistration}

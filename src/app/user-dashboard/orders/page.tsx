@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiGet } from "@/app/lib/api";
+import { playNotificationSound } from "@/utils/sound";
 
 type Booking = {
   id: string;
@@ -30,15 +31,37 @@ type Booking = {
 export default function UserOrdersPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const prevMapRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    apiGet("/bookings/my", token)
-      .then(setBookings)
-      .catch(() => alert("Failed to load bookings"))
-      .finally(() => setLoading(false));
+    const load = async () => {
+      try {
+        const data = await apiGet("/bookings/my", token);
+        const prev = prevMapRef.current;
+        const nextMap: Record<string, string> = {};
+        let changed = false;
+        data.forEach((b: Booking) => {
+          nextMap[b.id] = b.status;
+          if (prev[b.id] && prev[b.id] !== b.status) {
+            changed = true;
+          }
+        });
+        prevMapRef.current = nextMap;
+        if (changed) playNotificationSound();
+        setBookings(data);
+      } catch {
+        alert("Failed to load bookings");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+    const interval = setInterval(load, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) {

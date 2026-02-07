@@ -292,6 +292,24 @@ export default function BusinessBookingsPage() {
                   Complete Service
                 </button>
               )}
+
+              {b.status === "PAYMENT_COMPLETED" && (
+                <button
+                  onClick={async () => {
+                    const token = localStorage.getItem("token");
+                    await axios.put(
+                      `${API_BASE}/business-bookings/${b.id}/deliver`,
+                      {},
+                      { headers: { Authorization: `Bearer ${token}` } }
+                    );
+                    updateStatus(b.id, "VEHICLE_DELIVERED");
+                    message.success("Vehicle delivered");
+                  }}
+                  className="btn-green"
+                >
+                  Mark Delivered
+                </button>
+              )}
             </div>
           </div>
         ))}
