@@ -3,10 +3,46 @@ import { useMemo, useState } from "react";
 import { apiPost } from "@/app/lib/api";
 
 const PLANS = [
-  { id: "STARTER", name: "Starter Plan", price: 0 },
-  { id: "STANDARD", name: "Standard Plan", price: 15000 },
-  { id: "GROWTH", name: "Growth Plan", price: 100000 },
-  { id: "ELITE", name: "Premier Partner Plan", price: 5999 },
+  {
+    id: "STARTER",
+    name: "Starter Plan (Pay-as-you-grow)",
+    price: 0,
+    priceLabel: "20% Flat on Revenue",
+    details: [
+      "Quick entry plan – simple percentage model",
+      "Ideal for small or new businesses",
+    ],
+  },
+  {
+    id: "STANDARD",
+    name: "Standard Plan (Flat Monthly)",
+    price: 15000,
+    priceLabel: "₹15,000 per Month",
+    details: [
+      "Fixed payment model – predictable costs",
+      "Ideal for steady-volume partners",
+    ],
+  },
+  {
+    id: "GROWTH",
+    name: "Growth+ Plan (Performance-based)",
+    price: 100000,
+    priceLabel: "₹1,00,000 + 5% of Annual Revenue",
+    details: [
+      "Revenue reward: cross ₹20 L & get ₹50,000 off next year",
+      "Ideal for growing partners with large revenue",
+    ],
+  },
+  {
+    id: "ELITE",
+    name: "Premium Partner Plan (Elite Tier)",
+    price: 200000,
+    priceLabel: "₹2,00,000 + 1.5% of Annual Revenue",
+    details: [
+      "Exclusive premium support & priority listing and more",
+      "For established businesses above ₹40 L annual revenue",
+    ],
+  },
 ];
 
 type BusinessPlanSelectionProps = {
@@ -20,6 +56,7 @@ export default function PlansPage({
 }: BusinessPlanSelectionProps) {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const businessId = useMemo(() => {
     if (businessIdProp) return businessIdProp;
@@ -52,8 +89,11 @@ export default function PlansPage({
           { businessId, planId, free: true },
           token ?? undefined
         );
-        if (onActivated) onActivated();
-        else window.location.href = "/business-dashboard";
+        setSuccessMessage(
+          "Your registration has been successfully completed. Your profile is under review and we will get back to you within 24–48 hours."
+        );
+        if (onActivated) setTimeout(() => onActivated(), 2500);
+        else setTimeout(() => (window.location.href = "/business-dashboard"), 2500);
         return;
       }
 
@@ -79,8 +119,11 @@ export default function PlansPage({
             },
             token ?? undefined
           );
-          if (onActivated) onActivated();
-          else window.location.href = "/business-dashboard";
+          setSuccessMessage(
+            "Your registration has been successfully completed. Your profile is under review and we will get back to you within 24–48 hours."
+          );
+          if (onActivated) setTimeout(() => onActivated(), 2500);
+          else setTimeout(() => (window.location.href = "/business-dashboard"), 2500);
         },
       });
 
@@ -94,6 +137,11 @@ export default function PlansPage({
 
   return (
     <div className="max-w-4xl mx-auto p-6 grid gap-6 sm:grid-cols-2">
+      {successMessage && (
+        <div className="sm:col-span-2 bg-green-50 text-green-700 p-3 rounded-lg border border-green-200 text-sm">
+          {successMessage}
+        </div>
+      )}
       {error && (
         <div className="sm:col-span-2 bg-red-50 text-red-700 p-3 rounded-lg">
           {error}
@@ -108,13 +156,21 @@ export default function PlansPage({
           <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">
             {p.name}
           </h3>
-          <p className="text-2xl my-3 text-gray-900 dark:text-slate-100">
-            ₹{p.price}
+          <p className="text-lg mt-2 text-gray-900 dark:text-slate-100">
+            {p.priceLabel}
           </p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
+            One-time onboarding fee: ₹1,499 (waived for Early Access)
+          </p>
+          <ul className="mt-4 text-sm text-gray-700 dark:text-slate-300 space-y-2">
+            {p.details.map((d) => (
+              <li key={d}>• {d}</li>
+            ))}
+          </ul>
           <button
             onClick={() => selectPlan(p.id)}
             disabled={loadingPlan === p.id}
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg disabled:opacity-60"
+            className="w-full bg-indigo-600 text-white py-2 rounded-lg disabled:opacity-60 mt-5"
           >
             {loadingPlan === p.id
               ? "Processing..."
