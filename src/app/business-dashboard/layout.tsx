@@ -11,6 +11,7 @@ export default function BusinessDashboardLayout({
   children: ReactNode;
 }) {
   const [pendingCount, setPendingCount] = useState(0);
+  const [toast, setToast] = useState<string | null>(null);
   const prevMapRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
@@ -23,17 +24,86 @@ export default function BusinessDashboardLayout({
         const prev = prevMapRef.current;
         const nextMap: Record<string, string> = {};
         let changed = false;
+        let changedBooking: any = null;
         let pending = 0;
         data.forEach((b: any) => {
           nextMap[b.id] = b.status;
           if (prev[b.id] && prev[b.id] !== b.status) {
             changed = true;
+            if (!changedBooking) changedBooking = b;
           }
           if (b.status === "REQUESTED") pending += 1;
         });
         prevMapRef.current = nextMap;
         setPendingCount(pending);
-        if (changed) playNotificationSound();
+        if (changed) {
+          playNotificationSound();
+          setToast("Booking status updated.");
+          setTimeout(() => setToast(null), 4000);
+          if (typeof window !== "undefined" && Notification.permission === "granted") {
+            const status = changedBooking?.status;
+            const statusMap: Record<string, { title: string; body: string }> = {
+              REQUESTED: {
+                title: "New Booking Request",
+                body: "You received a new booking request.",
+              },
+              BUSINESS_ACCEPTED: {
+                title: "Booking Accepted",
+                body: "You accepted a booking.",
+              },
+              BUSINESS_REJECTED: {
+                title: "Booking Rejected",
+                body: "You rejected a booking.",
+              },
+              SERVICE_STARTED: {
+                title: "Service Started",
+                body: "Service has started for a booking.",
+              },
+              PAYMENT_PENDING: {
+                title: "Payment Pending",
+                body: "Service completed. Awaiting payment.",
+              },
+              PAYMENT_COMPLETED: {
+                title: "Payment Completed",
+                body: "Payment received for a booking.",
+              },
+              VEHICLE_DELIVERED: {
+                title: "Vehicle Delivered",
+                body: "Booking marked delivered.",
+              },
+              CANCELLED: {
+                title: "Booking Cancelled",
+                body: "User cancelled a booking.",
+              },
+            };
+            const fallback = {
+              title: "Booking Update",
+              body: "A booking status was updated.",
+            };
+            const meta = status ? statusMap[status] || fallback : fallback;
+            const title = meta.title;
+            const body = meta.body;
+            const url = "/business-dashboard/bookings";
+            if ("serviceWorker" in navigator) {
+              navigator.serviceWorker.ready.then((reg) => {
+                reg.showNotification(title, {
+                  body,
+                  icon: "/icon-192.png",
+                  data: { url },
+                });
+              });
+            } else {
+              const n = new Notification(title, {
+                body,
+                icon: "/icon-192.png",
+                data: { url },
+              });
+              n.onclick = () => {
+                window.location.href = url;
+              };
+            }
+          }
+        }
       } catch {
         // ignore
       }
@@ -46,6 +116,11 @@ export default function BusinessDashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      {toast && (
+        <div className="fixed top-20 right-4 z-50 bg-slate-900 text-white text-sm px-4 py-2 rounded-lg shadow">
+          {toast}
+        </div>
+      )}
       {/* Top bar */}
       <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">

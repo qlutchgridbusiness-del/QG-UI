@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { FaUserCircle } from "react-icons/fa";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 import { useTheme } from "@/app/context/ThemeContext";
 import { FiMoon, FiSun } from "react-icons/fi";
+import { apiGet } from "@/app/lib/api";
 
 export default function Navbar() {
   const router = useRouter();
@@ -15,6 +16,10 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { resolvedTheme, toggleTheme } = useTheme();
   const [hasTempAuth, setHasTempAuth] = useState(false);
+  const [userBadge, setUserBadge] = useState(0);
+  const [businessBadge, setBusinessBadge] = useState(0);
+  const prevUserRef = useRef<Record<string, string>>({});
+  const prevBizRef = useRef<Record<string, string>>({});
 
   const {
     user,
@@ -35,6 +40,40 @@ export default function Navbar() {
       localStorage.getItem("tempToken") || localStorage.getItem("verifiedPhone");
     setHasTempAuth(Boolean(temp));
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated || !isAuthReady) return;
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const load = async () => {
+      try {
+        if (role === "BUSINESS") {
+          const data = await apiGet("/business-bookings", token);
+          let pending = 0;
+          data.forEach((b: any) => {
+            if (b.status === "REQUESTED") pending += 1;
+          });
+          setBusinessBadge(pending);
+        } else {
+          const data = await apiGet("/bookings/my", token);
+          let active = 0;
+          data.forEach((b: any) => {
+            if (b.status !== "VEHICLE_DELIVERED" && b.status !== "CANCELLED") {
+              active += 1;
+            }
+          });
+          setUserBadge(active);
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    load();
+    const interval = setInterval(load, 15000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, isAuthReady, role]);
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-white/95 dark:bg-slate-950/95 backdrop-blur border-b border-gray-200/80 dark:border-slate-800 shadow-sm">
@@ -77,10 +116,17 @@ export default function Navbar() {
             )
           ) : (
             <div className="relative">
-              <FaUserCircle
-                onClick={() => setOpen((v) => !v)}
-              className="text-3xl text-gray-900 dark:text-slate-100 cursor-pointer hover:text-indigo-600 transition"
-            />
+              <div className="relative">
+                <FaUserCircle
+                  onClick={() => setOpen((v) => !v)}
+                  className="text-3xl text-gray-900 dark:text-slate-100 cursor-pointer hover:text-indigo-600 transition"
+                />
+                {(userBadge > 0 || businessBadge > 0) && (
+                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] rounded-full px-1.5 py-0.5">
+                    {role === "BUSINESS" ? businessBadge : userBadge}
+                  </span>
+                )}
+              </div>
 
               <AnimatePresence>
                 {open && (
@@ -108,7 +154,7 @@ export default function Navbar() {
                   />
 
                   <NavItem
-                    label="Orders"
+                    label={`Orders${userBadge > 0 ? ` (${userBadge})` : ""}`}
                     onClick={() => {
                       setOpen(false);
                       router.push("/user-dashboard/orders");
