@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { apiGet } from "@/app/lib/api";
 
 export default function BusinessTermsPage() {
   const [signatureName, setSignatureName] = useState<string>("");
   const [businessName, setBusinessName] = useState<string>("");
   const [signedDate, setSignedDate] = useState<string>("");
+  const [signatureUrl, setSignatureUrl] = useState<string>("");
   
   useEffect(() => {
     try {
@@ -16,11 +18,29 @@ export default function BusinessTermsPage() {
       }
       const sig = localStorage.getItem("business:signatureName");
       if (sig) setSignatureName(sig);
+      const sigUrl = localStorage.getItem("business:signatureUrl");
+      if (sigUrl) setSignatureUrl(sigUrl);
       const date = localStorage.getItem("business:signatureDate");
       if (date) setSignedDate(date);
     } catch {
       // ignore
     }
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const businessId = localStorage.getItem("businessId");
+    if (!token || !businessId) return;
+    apiGet(`/business/${businessId}`, token)
+      .then((res: any) => {
+        if (res?.name) setBusinessName(res.name);
+        if (res?.termsSignatureName) setSignatureName(res.termsSignatureName);
+        if (res?.termsSignatureUrl) setSignatureUrl(res.termsSignatureUrl);
+        if (res?.termsAcceptedAt) {
+          setSignedDate(new Date(res.termsAcceptedAt).toLocaleDateString());
+        }
+      })
+      .catch(() => {});
   }, []);
 
   return (
@@ -187,6 +207,15 @@ export default function BusinessTermsPage() {
                 <div className="text-gray-800 dark:text-slate-200">
                   Signature: {signatureName || "__________________"}
                 </div>
+                {signatureUrl && (
+                  <div className="mt-2">
+                    <img
+                      src={signatureUrl}
+                      alt="Digital signature"
+                      className="h-16 object-contain border border-gray-200 dark:border-slate-700 rounded bg-white"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>

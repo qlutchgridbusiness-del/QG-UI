@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-import { apiPost, apiGet, apiPut } from "@/app/lib/api"; // your file earlier
+import { apiPost, apiGet, apiPut, API_BASE } from "@/app/lib/api"; // your file earlier
 import { UploadCard } from "@/app/business-dashboard/components/UploadCard";
 import BusinessPlanSelection from "./plans/page";
 
@@ -136,6 +136,9 @@ export default function BusinessRegisterPage() {
 
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [signatureName, setSignatureName] = useState("");
+  const signatureCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
   const [termsSubmitting, setTermsSubmitting] = useState(false);
   const [termsError, setTermsError] = useState<string | null>(null);
   const [termsSubmitted, setTermsSubmitted] = useState(false);
@@ -221,6 +224,7 @@ export default function BusinessRegisterPage() {
       if (!signatureName.trim() && payload?.name?.trim()) {
         setSignatureName(payload.name.trim());
       }
+      setTimeout(() => initSignatureCanvas(), 0);
     }
   }, [step, savedBusinessId]);
 
@@ -359,18 +363,43 @@ export default function BusinessRegisterPage() {
       setTermsError("Please enter your full name as signature");
       return;
     }
+    if (!signatureDataUrl) {
+      setTermsError("Please provide your digital signature");
+      return;
+    }
 
     setTermsSubmitting(true);
     try {
       const businessId = await ensureBusinessId();
       if (!businessId) return;
       const authToken = getAuthToken();
+      if (!authToken) throw new Error("Unauthorized");
+
+      // Upload signature image
+      const blob = dataUrlToBlob(signatureDataUrl);
+      const fd = new FormData();
+      fd.append("file", blob, "signature.png");
+      const uploadRes = await fetch(
+        `${API_BASE}/uploads/image`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: fd,
+        }
+      );
+      if (!uploadRes.ok) throw new Error("Failed to upload signature");
+      const uploadJson = await uploadRes.json();
+      const signatureUrl = uploadJson.url;
+
       await apiPost(
         `/business/${businessId}/terms`,
-        { signatureName: signatureName.trim() },
+        { signatureName: signatureName.trim(), signatureUrl },
         authToken ?? undefined
       );
       localStorage.setItem("business:signatureName", signatureName.trim());
+      localStorage.setItem("business:signatureUrl", signatureUrl);
       localStorage.setItem(
         "business:signatureDate",
         new Date().toLocaleDateString()
@@ -381,6 +410,78 @@ export default function BusinessRegisterPage() {
     } finally {
       setTermsSubmitting(false);
     }
+  }
+
+  function dataUrlToBlob(dataUrl: string) {
+    const [meta, base64] = dataUrl.split(",");
+    const mime = meta.match(/data:(.*);base64/)?.[1] || "image/png";
+    const bytes = atob(base64);
+    const arr = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  }
+
+  function initSignatureCanvas() {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.scale(dpr, dpr);
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#111827";
+  }
+
+  function getCanvasPoint(
+    e: React.PointerEvent<HTMLCanvasElement>
+  ) {
+    const rect = (e.target as HTMLCanvasElement).getBoundingClientRect();
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+  }
+
+  function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const p = getCanvasPoint(e);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    setIsDrawing(true);
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (!isDrawing) return;
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const p = getCanvasPoint(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  }
+
+  function handlePointerUp() {
+    setIsDrawing(false);
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    setSignatureDataUrl(canvas.toDataURL("image/png"));
+  }
+
+  function clearSignature() {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setSignatureDataUrl(null);
   }
 
   /* ---------- Step handlers ---------- */
@@ -1469,6 +1570,36 @@ export default function BusinessRegisterPage() {
                         placeholder="Type your full name"
                         className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                       />
+                    </div>
+
+                    <div>
+                      <label className="text-sm mb-2 block">
+                        Draw Signature
+                      </label>
+                      <div className="border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-950">
+                        <canvas
+                          ref={signatureCanvasRef}
+                          className="w-full h-40 touch-none"
+                          onPointerDown={handlePointerDown}
+                          onPointerMove={handlePointerMove}
+                          onPointerUp={handlePointerUp}
+                          onPointerLeave={handlePointerUp}
+                        />
+                      </div>
+                      <div className="flex items-center gap-3 mt-2">
+                        <button
+                          type="button"
+                          onClick={clearSignature}
+                          className="px-3 py-1.5 text-xs rounded-md border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-200"
+                        >
+                          Clear Signature
+                        </button>
+                        {signatureDataUrl && (
+                          <span className="text-xs text-green-600">
+                            Signature captured
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <button
