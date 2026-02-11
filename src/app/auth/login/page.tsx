@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { apiPost } from "@/app/lib/api";
+import { apiGet, apiPost } from "@/app/lib/api";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 
@@ -91,6 +91,21 @@ function LoginPageInner() {
       localStorage.setItem("token", res.token);
       localStorage.setItem("user", JSON.stringify(res.user));
       login(res);
+
+      if (res.user.role === "BUSINESS") {
+        try {
+          const businessRes = await apiGet("/business/me", res.token);
+          const businesses = businessRes?.businesses || businessRes || [];
+          const business = Array.isArray(businesses) ? businesses[0] : null;
+          if (!business || business.status !== "ACTIVE") {
+            router.push("/auth/register/business?pending=1");
+            return;
+          }
+        } catch {
+          router.push("/auth/register/business?pending=1");
+          return;
+        }
+      }
 
       router.push(
         res.user.role === "BUSINESS" ? "/business-dashboard" : "/user-dashboard"

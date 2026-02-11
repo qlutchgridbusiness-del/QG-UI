@@ -56,6 +56,7 @@ export default function BusinessRegisterPage() {
   const [step, setStep] = useState<number>(1);
   const [submitting, setSubmitting] = useState(false);
   const [savedBusinessId, setSavedBusinessId] = useState<string | null>(null);
+  const [pendingMode, setPendingMode] = useState(false);
   const [addressQuery, setAddressQuery] = useState("");
   const [addressResults, setAddressResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -139,6 +140,7 @@ export default function BusinessRegisterPage() {
   const signatureCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [signatureConfirmed, setSignatureConfirmed] = useState(false);
   const [termsSubmitting, setTermsSubmitting] = useState(false);
   const [termsError, setTermsError] = useState<string | null>(null);
   const [termsSubmitted, setTermsSubmitted] = useState(false);
@@ -162,6 +164,20 @@ export default function BusinessRegisterPage() {
       window.location.href = "/auth/login";
     }
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("pending") === "1") {
+      setPendingMode(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (pendingMode && savedBusinessId) {
+      setStep(6);
+    }
+  }, [pendingMode, savedBusinessId]);
 
   useEffect(() => {
     if (addressQuery.length < 3) {
@@ -204,6 +220,22 @@ export default function BusinessRegisterPage() {
       setSavedBusinessId(existing);
     }
   }, []);
+
+  useEffect(() => {
+    if (!pendingMode || savedBusinessId) return;
+    const token = getAuthToken();
+    if (!token) return;
+    apiGet("/business/me", token)
+      .then((res: any) => {
+        const businesses = res?.businesses || res || [];
+        const biz = Array.isArray(businesses) ? businesses[0] : null;
+        if (biz?.id) {
+          setSavedBusinessId(biz.id);
+          localStorage.setItem("businessId", biz.id);
+        }
+      })
+      .catch(() => {});
+  }, [pendingMode, savedBusinessId]);
 
   useEffect(() => {
     if (payload.address) {
@@ -250,6 +282,23 @@ export default function BusinessRegisterPage() {
     const authToken = getAuthToken();
     if (!authToken) {
       window.location.href = "/auth/login";
+      return null;
+    }
+
+    if (pendingMode) {
+      try {
+        const me = await apiGet("/business/me", authToken);
+        const businesses = me?.businesses || me || [];
+        const existing = Array.isArray(businesses) ? businesses[0] : null;
+        if (existing?.id) {
+          setSavedBusinessId(existing.id);
+          localStorage.setItem("businessId", existing.id);
+          return existing.id;
+        }
+      } catch {
+        // ignore
+      }
+      setKycError("Unable to load existing business");
       return null;
     }
 
@@ -367,6 +416,10 @@ export default function BusinessRegisterPage() {
       setTermsError("Please provide your digital signature");
       return;
     }
+    if (!signatureConfirmed) {
+      setTermsError("Please confirm your signature before continuing");
+      return;
+    }
 
     setTermsSubmitting(true);
     try {
@@ -405,6 +458,7 @@ export default function BusinessRegisterPage() {
         new Date().toLocaleDateString()
       );
       setTermsSubmitted(true);
+      setSignatureConfirmed(false);
     } catch (e: any) {
       setTermsError(e?.message || "Failed to submit terms");
     } finally {
@@ -447,6 +501,7 @@ export default function BusinessRegisterPage() {
   }
 
   function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (signatureConfirmed) return;
     const canvas = signatureCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -482,6 +537,7 @@ export default function BusinessRegisterPage() {
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     setSignatureDataUrl(null);
+    setSignatureConfirmed(false);
   }
 
   /* ---------- Step handlers ---------- */
@@ -738,6 +794,19 @@ export default function BusinessRegisterPage() {
           {/* right content panel */}
           <div className="col-span-12 lg:col-span-8 p-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur rounded-xl">
             <div className="space-y-6">
+              {pendingMode && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
+                  <div className="font-semibold">
+                    Registration submitted — awaiting approval
+                  </div>
+                  <div className="text-sm mt-1">
+                    Your business profile is under review. We’ll verify the
+                    digital signature and confirm activation within 24–48 hours.
+                    You’ll receive a notification once your business is live.
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Step {step} / 6</h3>
                 <div className="text-sm text-gray-500 dark:text-slate-400">
@@ -745,8 +814,13 @@ export default function BusinessRegisterPage() {
                 </div>
               </div>
 
-              {/* Step content */}
-              {step === 1 && (
+              <div
+                className={
+                  pendingMode && step !== 6 ? "pointer-events-none opacity-60" : ""
+                }
+              >
+                {/* Step content */}
+                {step === 1 && (
                 <section className="space-y-4">
                   <h4 className="text-xl font-bold text-gray-900 dark:text-slate-100">Business basics</h4>
 
@@ -853,7 +927,8 @@ export default function BusinessRegisterPage() {
                     </button>
                   </div>
                 </section>
-              )}
+                )}
+              </div>
 
               {step === 2 && (
                 <section className="space-y-6">
@@ -1576,7 +1651,12 @@ export default function BusinessRegisterPage() {
                       <label className="text-sm mb-2 block">
                         Draw Signature
                       </label>
-                      <div className="border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-950">
+                      <div className="border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-950 relative">
+                        {signatureConfirmed && (
+                          <div className="absolute inset-0 bg-white/70 dark:bg-slate-900/70 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-slate-200">
+                            Signature confirmed
+                          </div>
+                        )}
                         <canvas
                           ref={signatureCanvasRef}
                           className="w-full h-40 touch-none"
@@ -1592,51 +1672,80 @@ export default function BusinessRegisterPage() {
                           onClick={clearSignature}
                           className="px-3 py-1.5 text-xs rounded-md border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-200"
                         >
-                          Clear Signature
+                          Retake Signature
                         </button>
                         {signatureDataUrl && (
                           <span className="text-xs text-green-600">
                             Signature captured
                           </span>
                         )}
+                        {signatureDataUrl && !signatureConfirmed && (
+                          <button
+                            type="button"
+                            onClick={() => setSignatureConfirmed(true)}
+                            className="px-3 py-1.5 text-xs rounded-md bg-indigo-600 text-white"
+                          >
+                            Confirm Signature
+                          </button>
+                        )}
+                        {signatureConfirmed && (
+                          <span className="text-xs text-indigo-600">
+                            Confirmed
+                          </span>
+                        )}
                       </div>
+
+                      {signatureDataUrl && (
+                        <div className="mt-3 border border-gray-200 dark:border-slate-800 rounded-lg p-3 bg-gray-50 dark:bg-slate-900">
+                          <div className="text-xs text-gray-500 dark:text-slate-400 mb-2">
+                            Preview
+                          </div>
+                          <img
+                            src={signatureDataUrl}
+                            alt="Signature preview"
+                            className="h-20 object-contain bg-white rounded border border-gray-200 dark:border-slate-700"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <button
                       type="button"
                       onClick={submitTerms}
-                      disabled={termsSubmitting || termsSubmitted}
+                      disabled={termsSubmitting}
                       className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-60"
                     >
                       {termsSubmitting
                         ? "Submitting..."
                         : termsSubmitted
-                        ? "Terms Accepted"
+                        ? "Update & Continue"
                         : "Sign & Continue"}
                     </button>
                   </div>
 
-                  {termsSubmitted && (
+                  {termsSubmitted && !pendingMode && (
                     <div>
                       <h4 className="text-xl font-bold text-gray-900 dark:text-slate-100">Choose Your Plan</h4>
                       <BusinessPlanSelection
                         businessId={savedBusinessId}
                         onActivated={() => {
-                          localStorage.removeItem("business:register");
-                          localStorage.removeItem("business:services");
-                          localStorage.removeItem("businessId");
-                          localStorage.removeItem("tempToken");
-                          localStorage.removeItem("verifiedPhone");
-                          window.location.href = "/auth/login?registered=1";
+                          setPendingMode(true);
                         }}
                       />
+                    </div>
+                  )}
+                  {pendingMode && (
+                    <div className="text-sm text-gray-600 dark:text-slate-400">
+                      Your plan is locked while the profile is under review.
+                      You can update your digital signature above if needed.
                     </div>
                   )}
                 </section>
               )}
 
               {/* navigation */}
-              <div className="pt-6 border-t border-gray-200 dark:border-slate-800 mt-8">
+              {!pendingMode && (
+                <div className="pt-6 border-t border-gray-200 dark:border-slate-800 mt-8">
                 <div className="flex flex-col sm:flex-row gap-3 sm:justify-between">
                   {stepError && (
                     <div className="w-full bg-red-50 text-red-700 p-3 rounded-lg text-sm">
@@ -1712,6 +1821,7 @@ export default function BusinessRegisterPage() {
                   </div>
                 </div>
               </div>
+              )}
             </div>
           </div>
         </div>

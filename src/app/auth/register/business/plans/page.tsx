@@ -92,8 +92,7 @@ export default function PlansPage({
         setSuccessMessage(
           "Your registration has been successfully completed. Your profile is under review and we will get back to you within 24–48 hours."
         );
-        if (onActivated) setTimeout(() => onActivated(), 2500);
-        else setTimeout(() => (window.location.href = "/business-dashboard"), 2500);
+        if (onActivated) onActivated();
         return;
       }
 
@@ -122,8 +121,7 @@ export default function PlansPage({
           setSuccessMessage(
             "Your registration has been successfully completed. Your profile is under review and we will get back to you within 24–48 hours."
           );
-          if (onActivated) setTimeout(() => onActivated(), 2500);
-          else setTimeout(() => (window.location.href = "/business-dashboard"), 2500);
+          if (onActivated) onActivated();
         },
       });
 

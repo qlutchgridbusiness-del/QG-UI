@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { API_BASE } from "@/app/lib/api";
+import { useRouter } from "next/navigation";
 
 type Business = {
   id: string;
@@ -11,6 +12,8 @@ type Business = {
   status: string;
   address?: string;
   city?: string;
+  termsSignatureUrl?: string | null;
+  termsAcceptedAt?: string | null;
   owner?: {
     id: string;
     name?: string;
@@ -22,6 +25,7 @@ type Business = {
 export default function AdminBusinessesPage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchBusinesses = async () => {
@@ -49,9 +53,38 @@ export default function AdminBusinessesPage() {
     fetchBusinesses();
   }, []);
 
+  async function updateStatus(id: string, action: "activate" | "suspend") {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(
+        `${API_BASE}/admin/businesses/${id}/${action}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setBusinesses((prev) =>
+        prev.map((b) =>
+          b.id === id
+            ? {
+                ...b,
+                status: action === "activate" ? "ACTIVE" : "KYC_REJECTED",
+              }
+            : b
+        )
+      );
+    } catch (err) {
+      console.error("Failed to update business", err);
+      alert("Action failed. Check logs.");
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Businesses</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Businesses</h1>
+        <span className="text-sm text-gray-500">
+          {businesses.length} total
+        </span>
+      </div>
 
       {loading ? (
         <div className="text-sm text-gray-500">Loading businesses…</div>
@@ -69,6 +102,9 @@ export default function AdminBusinessesPage() {
                 <p className="text-lg font-semibold">{b.name}</p>
                 <p className="text-sm text-gray-500">
                   Owner: {b.owner?.name || "—"} · {b.address || b.city || "—"}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {b.owner?.phone || "—"} • {b.owner?.email || "—"}
                 </p>
               </div>
 
@@ -89,13 +125,18 @@ export default function AdminBusinessesPage() {
                 >
                   {b.status.replaceAll("_", " ")}
                 </span>
+                {(!b.termsSignatureUrl || !b.termsAcceptedAt) && (
+                  <span className="ml-2 inline-block px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                    Signature Pending
+                  </span>
+                )}
               </div>
 
               {/* Actions */}
               <div className="flex gap-3 pt-2">
                 <button
                   className="px-3 py-1 text-sm rounded bg-blue-100 text-blue-700 hover:bg-blue-200"
-                  onClick={() => console.log("View business", b.id)}
+                  onClick={() => router.push(`/admin/businesses/${b.id}`)}
                 >
                   View
                 </button>
@@ -103,18 +144,18 @@ export default function AdminBusinessesPage() {
                 {b.status !== "ACTIVE" && (
                   <button
                     className="px-3 py-1 text-sm rounded bg-green-100 text-green-700 hover:bg-green-200"
-                    onClick={() => console.log("Approve business", b.id)}
+                    onClick={() => updateStatus(b.id, "activate")}
                   >
                     Approve
                   </button>
                 )}
 
-                {b.status !== "REJECTED" && (
+                {b.status === "ACTIVE" && (
                   <button
                     className="px-3 py-1 text-sm rounded bg-red-100 text-red-700 hover:bg-red-200"
-                    onClick={() => console.log("Reject business", b.id)}
+                    onClick={() => updateStatus(b.id, "suspend")}
                   >
-                    Reject
+                    Suspend
                   </button>
                 )}
               </div>

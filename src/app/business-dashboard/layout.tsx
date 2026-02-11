@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { apiGet } from "@/app/lib/api";
 import { playNotificationSound } from "@/utils/sound";
 
@@ -13,6 +14,8 @@ export default function BusinessDashboardLayout({
   const [pendingCount, setPendingCount] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const prevMapRef = useRef<Record<string, string>>({});
+  const [checkingStatus, setCheckingStatus] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -20,6 +23,13 @@ export default function BusinessDashboardLayout({
 
     const load = async () => {
       try {
+        const businessRes = await apiGet("/business/me", token);
+        const businesses = businessRes?.businesses || businessRes || [];
+        const business = Array.isArray(businesses) ? businesses[0] : null;
+        if (!business || business.status !== "ACTIVE") {
+          router.replace("/auth/register/business?pending=1");
+          return;
+        }
         const data = await apiGet("/business-bookings", token);
         const prev = prevMapRef.current;
         const nextMap: Record<string, string> = {};
@@ -106,6 +116,8 @@ export default function BusinessDashboardLayout({
         }
       } catch {
         // ignore
+      } finally {
+        setCheckingStatus(false);
       }
     };
 
@@ -149,7 +161,13 @@ export default function BusinessDashboardLayout({
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 py-6">
-        {children}
+        {checkingStatus ? (
+          <div className="text-sm text-gray-600 dark:text-slate-400">
+            Checking business status...
+          </div>
+        ) : (
+          children
+        )}
       </main>
     </div>
   );
