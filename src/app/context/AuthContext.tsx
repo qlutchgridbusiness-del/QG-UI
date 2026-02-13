@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { safeClear, safeGetItem, safeRemoveItem, safeSetItem } from "@/app/lib/safeStorage";
 
 type User = {
   id: string;
@@ -46,9 +47,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   /* ---------- LOAD FROM STORAGE ---------- */
   useEffect(() => {
-    const t = localStorage.getItem("token");
-    const u = localStorage.getItem("user");
-    const b = localStorage.getItem("activeBusinessId");
+    const t = safeGetItem("token");
+    const u = safeGetItem("user");
+    const b = safeGetItem("activeBusinessId");
 
     if (t) setToken(t);
 
@@ -73,11 +74,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   /* ---------- ACTIONS ---------- */
   function login(data: any) {
-    localStorage.setItem("token", data.token);
+    safeSetItem("token", data.token);
     if (data.user) {
-      localStorage.setItem("user", JSON.stringify(data.user));
+      safeSetItem("user", JSON.stringify(data.user));
     } else {
-      localStorage.removeItem("user");
+      safeRemoveItem("user");
     }
 
     setToken(data.token);
@@ -85,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   function logout() {
-    localStorage.clear();
+    safeClear();
     setUser(null);
     setToken(null);
     setActiveBusinessId(null);
@@ -93,9 +94,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   function switchToBusiness(id: string | null) {
     if (id) {
-      localStorage.setItem("activeBusinessId", id);
+      safeSetItem("activeBusinessId", id);
     } else {
-      localStorage.removeItem("activeBusinessId");
+      safeRemoveItem("activeBusinessId");
     }
     setActiveBusinessId(id);
   }

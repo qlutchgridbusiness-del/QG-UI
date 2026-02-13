@@ -2,16 +2,19 @@
 
 import { Suspense, useState } from "react";
 import { apiGet, apiPost } from "@/app/lib/api";
+import { safeGetItem, safeRemoveItem, safeSetItem } from "@/app/lib/safeStorage";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 
 function LoginPageInner() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
-  const [step, setStep] = useState<"PHONE" | "OTP">("PHONE");
+  const [step, setStep] = useState<"PHONE" | "OTP" | "ADMIN">("PHONE");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
   const registered = searchParams.get("registered") === "1";
@@ -76,11 +79,11 @@ function LoginPageInner() {
       if (res.isNewUser) {
         const tempToken = res.tempToken ?? res.token ?? "";
         if (tempToken) {
-          localStorage.setItem("tempToken", tempToken);
+          safeSetItem("tempToken", tempToken);
         }
-        localStorage.setItem("verifiedPhone", phone);
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        safeSetItem("verifiedPhone", phone);
+        safeRemoveItem("token");
+        safeRemoveItem("user");
 
         router.push("/auth/register");
 
@@ -88,8 +91,8 @@ function LoginPageInner() {
       }
 
       // Existing user
-      localStorage.setItem("token", res.token);
-      localStorage.setItem("user", JSON.stringify(res.user));
+      safeSetItem("token", res.token);
+      safeSetItem("user", JSON.stringify(res.user));
       login(res);
 
       if (res.user.role === "BUSINESS") {
@@ -117,6 +120,26 @@ function LoginPageInner() {
     }
   }
 
+  async function adminLogin() {
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await apiPost("/auth/admin-login", {
+        email: adminEmail.trim(),
+        password: adminPassword,
+      });
+
+      safeSetItem("token", res.token);
+      safeSetItem("user", JSON.stringify(res.user));
+      login(res);
+      router.push("/admin");
+    } catch (err: any) {
+      setError(err?.message || "Admin login failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   /* -------------------------
      UI
   -------------------------- */
@@ -124,7 +147,11 @@ function LoginPageInner() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950 px-4">
       <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow w-full max-w-md space-y-5 border border-gray-200 dark:border-slate-800">
         <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-slate-100">
-          {step === "PHONE" ? "Login / Register" : "Verify OTP"}
+          {step === "PHONE"
+            ? "Login / Register"
+            : step === "OTP"
+            ? "Verify OTP"
+            : "Admin Login"}
         </h2>
 
         {registered && (
@@ -156,6 +183,16 @@ function LoginPageInner() {
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-medium disabled:opacity-50"
             >
               {loading ? "Sending OTP..." : "Send OTP"}
+            </button>
+
+            <button
+              onClick={() => {
+                setStep("ADMIN");
+                setError(null);
+              }}
+              className="w-full text-sm text-gray-500 dark:text-slate-400 hover:underline"
+            >
+              Admin login
             </button>
           </>
         )}
@@ -196,6 +233,43 @@ function LoginPageInner() {
               className="w-full text-sm text-gray-500 dark:text-slate-400 hover:underline"
             >
               Change phone number
+            </button>
+          </>
+        )}
+
+        {step === "ADMIN" && (
+          <>
+            <input
+              placeholder="Admin email"
+              className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+              value={adminEmail}
+              onChange={(e) => setAdminEmail(e.target.value)}
+            />
+
+            <input
+              placeholder="Admin password"
+              type="password"
+              className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+            />
+
+            <button
+              onClick={adminLogin}
+              disabled={loading}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-medium disabled:opacity-50"
+            >
+              {loading ? "Signing in..." : "Sign in as Admin"}
+            </button>
+
+            <button
+              onClick={() => {
+                setStep("PHONE");
+                setError(null);
+              }}
+              className="w-full text-sm text-gray-500 dark:text-slate-400 hover:underline"
+            >
+              Back to user login
             </button>
           </>
         )}

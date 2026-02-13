@@ -15,7 +15,9 @@ export default function UserDashboardLayout({
   const [pendingPayments, setPendingPayments] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const [permission, setPermission] = useState<NotificationPermission>(
-    typeof window !== "undefined" ? Notification.permission : "default"
+    typeof window !== "undefined" && "Notification" in window
+      ? Notification.permission
+      : "default"
   );
   const prevMapRef = useRef<Record<string, string>>({});
 
@@ -49,7 +51,11 @@ export default function UserDashboardLayout({
           playNotificationSound();
           setToast("You have new booking updates.");
           setTimeout(() => setToast(null), 4000);
-          if (typeof window !== "undefined" && Notification.permission === "granted") {
+          if (
+            typeof window !== "undefined" &&
+            "Notification" in window &&
+            Notification.permission === "granted"
+          ) {
             const status = changedBooking?.status;
             const statusMap: Record<string, { title: string; body: string }> = {
               REQUESTED: {
@@ -95,7 +101,7 @@ export default function UserDashboardLayout({
             const url = changedBooking
               ? `/user-dashboard/bookings/${changedBooking.id}`
               : "/user-dashboard/orders";
-            if ("serviceWorker" in navigator) {
+            if ("serviceWorker" in navigator && window.isSecureContext) {
               navigator.serviceWorker.ready.then((reg) => {
                 reg.showNotification(title, {
                   body,
@@ -127,6 +133,8 @@ export default function UserDashboardLayout({
 
   async function requestPermission() {
     if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (!window.isSecureContext) return;
     const res = await Notification.requestPermission();
     setPermission(res);
   }

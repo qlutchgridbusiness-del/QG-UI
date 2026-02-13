@@ -9,6 +9,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useTheme } from "@/app/context/ThemeContext";
 import { FiMoon, FiSun } from "react-icons/fi";
 import { apiGet } from "@/app/lib/api";
+import { safeGetItem } from "@/app/lib/safeStorage";
 
 export default function Navbar() {
   const router = useRouter();
@@ -36,14 +37,13 @@ export default function Navbar() {
   const isLoggedIn = isAuthenticated;
 
   useEffect(() => {
-    const temp =
-      localStorage.getItem("tempToken") || localStorage.getItem("verifiedPhone");
+    const temp = safeGetItem("tempToken") || safeGetItem("verifiedPhone");
     setHasTempAuth(Boolean(temp));
   }, []);
 
   useEffect(() => {
     if (!isAuthenticated || !isAuthReady) return;
-    const token = localStorage.getItem("token");
+    const token = safeGetItem("token");
     if (!token) return;
 
     const load = async () => {

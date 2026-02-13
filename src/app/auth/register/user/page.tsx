@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiPost } from "@/app/lib/api";
+import { safeGetItem, safeRemoveItem, safeSetItem } from "@/app/lib/safeStorage";
 import { useRouter } from "next/navigation";
 
 export default function UserRegisterPage() {
@@ -23,8 +24,8 @@ export default function UserRegisterPage() {
      INIT: load temp auth state
   -------------------------- */
   useEffect(() => {
-    const p = localStorage.getItem("verifiedPhone");
-    const t = localStorage.getItem("tempToken");
+    const p = safeGetItem("verifiedPhone");
+    const t = safeGetItem("tempToken");
 
     if (!p || !t) {
       router.replace("/auth/login");
@@ -50,6 +51,14 @@ export default function UserRegisterPage() {
       setError("Name is required");
       return;
     }
+    if (!form.email.trim()) {
+      setError("Email is required");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      setError("Enter a valid email address");
+      return;
+    }
     if (!termsAccepted) {
       setError("Please accept the Terms & Conditions");
       return;
@@ -63,18 +72,18 @@ export default function UserRegisterPage() {
           role: "user",
           phone, // backend will cross-check with token
           name: form.name.trim(),
-          email: form.email?.trim() || undefined,
+          email: form.email.trim(),
         },
         tempToken // 👈 temp JWT (NOT full auth token)
       );
 
       // 🔐 Cleanup temp auth
-      localStorage.removeItem("tempToken");
-      localStorage.removeItem("verifiedPhone");
+      safeRemoveItem("tempToken");
+      safeRemoveItem("verifiedPhone");
 
       // ✅ Save real auth
-      localStorage.setItem("token", res.token);
-      localStorage.setItem("user", JSON.stringify(res.user));
+      safeSetItem("token", res.token);
+      safeSetItem("user", JSON.stringify(res.user));
 
       router.replace("/user-dashboard");
     } catch (err: any) {
@@ -108,7 +117,7 @@ export default function UserRegisterPage() {
         />
 
         <input
-          placeholder="Email (optional)"
+          placeholder="Email"
           className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}

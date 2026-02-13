@@ -50,7 +50,11 @@ export default function BusinessDashboardLayout({
           playNotificationSound();
           setToast("Booking status updated.");
           setTimeout(() => setToast(null), 4000);
-          if (typeof window !== "undefined" && Notification.permission === "granted") {
+          if (
+            typeof window !== "undefined" &&
+            "Notification" in window &&
+            Notification.permission === "granted"
+          ) {
             const status = changedBooking?.status;
             const statusMap: Record<string, { title: string; body: string }> = {
               REQUESTED: {
@@ -94,7 +98,7 @@ export default function BusinessDashboardLayout({
             const title = meta.title;
             const body = meta.body;
             const url = "/business-dashboard/bookings";
-            if ("serviceWorker" in navigator) {
+            if ("serviceWorker" in navigator && window.isSecureContext) {
               navigator.serviceWorker.ready.then((reg) => {
                 reg.showNotification(title, {
                   body,

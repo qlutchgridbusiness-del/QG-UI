@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
 import { apiPost, apiGet, apiPut, API_BASE } from "@/app/lib/api"; // your file earlier
+import { safeGetItem, safeSetItem } from "@/app/lib/safeStorage";
 import { UploadCard } from "@/app/business-dashboard/components/UploadCard";
 import BusinessPlanSelection from "./plans/page";
 
@@ -65,10 +66,7 @@ export default function BusinessRegisterPage() {
 
   const [payload, setPayload] = useState<BusinessPayload>(() => {
     try {
-      const raw =
-        typeof window !== "undefined"
-          ? localStorage.getItem("business:register")
-          : null;
+      const raw = safeGetItem("business:register");
 
       return raw
         ? JSON.parse(raw)
@@ -94,10 +92,7 @@ export default function BusinessRegisterPage() {
 
   const [services, setServices] = useState<ServiceRow[]>(() => {
     try {
-      const raw =
-        typeof window !== "undefined"
-          ? localStorage.getItem("business:services")
-          : null;
+      const raw = safeGetItem("business:services");
       const parsed = raw ? JSON.parse(raw) : null;
       const normalized = Array.isArray(parsed)
         ? parsed.map((s: any) => ({
@@ -154,16 +149,16 @@ export default function BusinessRegisterPage() {
 
   useEffect(() => {
     // save draft locally
-    localStorage.setItem("business:register", JSON.stringify(payload));
+    safeSetItem("business:register", JSON.stringify(payload));
   }, [payload]);
 
   useEffect(() => {
-    localStorage.setItem("business:services", JSON.stringify(services));
+    safeSetItem("business:services", JSON.stringify(services));
   }, [services]);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const tempToken = localStorage.getItem("tempToken");
+    const token = safeGetItem("token");
+    const tempToken = safeGetItem("tempToken");
     if (!token && !tempToken) {
       // save intent
       localStorage.setItem("redirectAfterLogin", "/auth/register/business");
@@ -221,10 +216,33 @@ export default function BusinessRegisterPage() {
   }, []);
 
   useEffect(() => {
-    const existing = localStorage.getItem("businessId");
+    const existing = safeGetItem("businessId");
     if (existing) {
       setSavedBusinessId(existing);
     }
+  }, []);
+
+  useEffect(() => {
+    const token = getAuthToken();
+    if (!token) return;
+    let cancelled = false;
+    apiGet("/business/me", token)
+      .then((res: any) => {
+        if (cancelled) return;
+        const businesses = res?.businesses || res || [];
+        const biz = Array.isArray(businesses) ? businesses[0] : null;
+        if (biz?.id) {
+          setSavedBusinessId(biz.id);
+          safeSetItem("businessId", biz.id);
+        }
+        if (biz?.status === "CONTRACT_PENDING") {
+          setPendingMode(true);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {

@@ -12,8 +12,10 @@ const PaymentConfirmation: React.FC = () => {
 
   useEffect(() => {
     // Play kaching sound
-    const audio = new Audio(kachingSound);
-    audio.play().catch(console.error);
+    if (typeof Audio !== "undefined") {
+      const audio = new Audio(kachingSound);
+      audio.play().catch(() => {});
+    }
 
     const saveBooking = async () => {
       if (hasSavedBooking.current) return;

@@ -28,7 +28,10 @@ export default function PushNotifications() {
 
   useEffect(() => {
     if (!ready) return;
-    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+    if (typeof window === "undefined") return;
+    if (!("Notification" in window)) return;
+    if (!("serviceWorker" in navigator)) return;
+    if (!window.isSecureContext) return;
 
     const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
     if (!publicKey) return;
@@ -55,6 +58,9 @@ export default function PushNotifications() {
 
   async function requestPermission() {
     try {
+      if (!("Notification" in window)) return;
+      if (!("serviceWorker" in navigator)) return;
+      if (!window.isSecureContext) return;
       const permission = await Notification.requestPermission();
       if (permission !== "granted") return;
       setNeedsPermission(false);
