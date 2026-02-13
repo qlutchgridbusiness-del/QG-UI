@@ -7,7 +7,7 @@ import BusinessPlanSelection from "./plans/page";
 type ServiceRow = {
   id: string;
   name: string;
-  pricingType: "FIXED" | "RANGE" | "QUOTATION";
+  pricingType: "FIXED" | "RANGE" | "QUOTE";
   price?: number | null;
   minPrice?: number | null;
   maxPrice?: number | null;
@@ -98,9 +98,14 @@ export default function BusinessRegisterPage() {
         typeof window !== "undefined"
           ? localStorage.getItem("business:services")
           : null;
-      return raw
-        ? JSON.parse(raw)
-        : [
+      const parsed = raw ? JSON.parse(raw) : null;
+      const normalized = Array.isArray(parsed)
+        ? parsed.map((s: any) => ({
+            ...s,
+            pricingType: s.pricingType === "QUOTATION" ? "QUOTE" : s.pricingType,
+          }))
+        : null;
+      return normalized ?? [
             {
               id: uid("s_"),
               name: "",
@@ -487,6 +492,8 @@ export default function BusinessRegisterPage() {
     if (!ctx) return;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, rect.width, rect.height);
     ctx.lineWidth = 2;
     ctx.lineCap = "round";
     ctx.strokeStyle = "#111827";
@@ -541,7 +548,10 @@ export default function BusinessRegisterPage() {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    const rect = canvas.getBoundingClientRect();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, rect.width, rect.height);
     setSignatureDataUrl(null);
     setSignatureConfirmed(false);
     setHasDrawn(false);
@@ -1668,6 +1678,7 @@ export default function BusinessRegisterPage() {
                         <canvas
                           ref={signatureCanvasRef}
                           className="w-full h-40 touch-none bg-white"
+                          style={{ backgroundColor: "#ffffff" }}
                           onPointerDown={handlePointerDown}
                           onPointerMove={handlePointerMove}
                           onPointerUp={handlePointerUp}

@@ -88,7 +88,7 @@ export default function BusinessProfilePage() {
               <div className="text-right">
                 <div className="font-bold text-indigo-600">
                   {s.pricingType === "FIXED" && `₹${s.price}`}
-                  {s.pricingType === "RANGE" && `₹${s.minPrice} – ₹${s.maxPrice}`}
+                  {s.pricingType === "RANGE" && "Quotation"}
                   {s.pricingType === "QUOTE" && "Quotation"}
                 </div>
 

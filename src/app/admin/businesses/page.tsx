@@ -25,6 +25,7 @@ type Business = {
 export default function AdminBusinessesPage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showPendingOnly, setShowPendingOnly] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -81,9 +82,21 @@ export default function AdminBusinessesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Businesses</h1>
-        <span className="text-sm text-gray-500">
-          {businesses.length} total
-        </span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowPendingOnly((v) => !v)}
+            className={`px-3 py-1.5 text-xs rounded-full border ${
+              showPendingOnly
+                ? "bg-amber-100 text-amber-700 border-amber-200"
+                : "bg-white text-gray-600 border-gray-200"
+            }`}
+          >
+            {showPendingOnly ? "Showing Pending Only" : "Show Pending Only"}
+          </button>
+          <span className="text-sm text-gray-500">
+            {businesses.length} total
+          </span>
+        </div>
       </div>
 
       {loading ? (
@@ -92,7 +105,9 @@ export default function AdminBusinessesPage() {
         <div className="text-sm text-gray-500">No businesses found</div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {businesses.map((b) => (
+          {businesses
+            .filter((b) => (showPendingOnly ? b.status !== "ACTIVE" : true))
+            .map((b) => (
             <div
               key={b.id}
               className="bg-white rounded-xl shadow p-4 space-y-3"

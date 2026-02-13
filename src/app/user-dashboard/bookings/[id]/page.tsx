@@ -215,8 +215,7 @@ export default function BookServicePage() {
           <div className="bg-white rounded-xl shadow p-4 mb-6">
             <div className="text-lg font-semibold text-indigo-600">
               {service.pricingType === "FIXED" && `₹${service.price}`}
-              {service.pricingType === "RANGE" &&
-                `₹${service.minPrice} – ₹${service.maxPrice}`}
+              {service.pricingType === "RANGE" && "Quotation"}
               {service.pricingType === "QUOTE" && "Quotation"}
             </div>
 

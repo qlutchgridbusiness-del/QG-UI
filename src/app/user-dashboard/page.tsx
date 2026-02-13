@@ -94,10 +94,9 @@ export default function UserDashboard() {
     if (s.pricingType === "FIXED") basePrice = s.price ?? 0;
     if (s.pricingType === "RANGE") basePrice = s.minPrice ?? 0;
 
-    const minMatch =
-      !minPrice || s.pricingType === "QUOTE" || basePrice >= +minPrice;
-    const maxMatch =
-      !maxPrice || s.pricingType === "QUOTE" || basePrice <= +maxPrice;
+    const isQuoteLike = s.pricingType === "QUOTE" || s.pricingType === "RANGE";
+    const minMatch = !minPrice || isQuoteLike || basePrice >= +minPrice;
+    const maxMatch = !maxPrice || isQuoteLike || basePrice <= +maxPrice;
 
     let radiusMatch = true;
     if (
@@ -205,8 +204,7 @@ export default function UserDashboard() {
 
                     <span className="font-bold text-indigo-600">
                       {s.pricingType === "FIXED" && `₹${s.price}`}
-                      {s.pricingType === "RANGE" &&
-                        `₹${s.minPrice} – ₹${s.maxPrice}`}
+                      {s.pricingType === "RANGE" && "Quotation"}
                       {s.pricingType === "QUOTE" && "Quotation"}
                     </span>
                   </div>
