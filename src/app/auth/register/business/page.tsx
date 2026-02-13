@@ -167,11 +167,8 @@ export default function BusinessRegisterPage() {
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("pending") === "1") {
-      setPendingMode(true);
-    }
+    // pending mode is driven by business status, not just the query param
+    // (so incomplete applications can continue registration)
   }, []);
 
   useEffect(() => {
@@ -285,6 +282,22 @@ export default function BusinessRegisterPage() {
   }, [step, savedBusinessId]);
 
   if (!hydrated) return null;
+
+  if (pendingMode) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center px-6">
+        <div className="max-w-xl text-center space-y-4">
+          <h1 className="text-2xl font-semibold text-gray-900">
+            Your application is pending
+          </h1>
+          <p className="text-gray-600">
+            Kindly wait for 24 to 48 hours. We are reviewing your submission and
+            will notify you once it is approved.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   function getAuthToken() {
     return localStorage.getItem("token") || localStorage.getItem("tempToken");
@@ -1834,7 +1847,8 @@ export default function BusinessRegisterPage() {
                     {step === 5 && (
                       <>
                         <p className="text-xs text-gray-500 dark:text-slate-400 text-center mt-2">
-                          Your business will go live after plan selection
+                          Your application is submitted only after terms and plan
+                          completion.
                         </p>
 
                         <button
@@ -1849,9 +1863,7 @@ export default function BusinessRegisterPage() {
             }
           `}
                         >
-                          {submitting
-                            ? "Publishing..."
-                            : "Continue to plans ->"}
+                          {submitting ? "Saving..." : "Save & Continue ->"}
                         </button>
                       </>
                     )}
