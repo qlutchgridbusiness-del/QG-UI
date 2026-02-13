@@ -141,6 +141,7 @@ export default function BusinessRegisterPage() {
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [signatureConfirmed, setSignatureConfirmed] = useState(false);
+  const [hasDrawn, setHasDrawn] = useState(false);
   const [termsSubmitting, setTermsSubmitting] = useState(false);
   const [termsError, setTermsError] = useState<string | null>(null);
   const [termsSubmitted, setTermsSubmitted] = useState(false);
@@ -484,6 +485,7 @@ export default function BusinessRegisterPage() {
     canvas.height = rect.height * dpr;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
     ctx.lineWidth = 2;
     ctx.lineCap = "round";
@@ -510,6 +512,7 @@ export default function BusinessRegisterPage() {
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
     setIsDrawing(true);
+    setHasDrawn(false);
   }
 
   function handlePointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
@@ -521,13 +524,16 @@ export default function BusinessRegisterPage() {
     const p = getCanvasPoint(e);
     ctx.lineTo(p.x, p.y);
     ctx.stroke();
+    setHasDrawn(true);
   }
 
   function handlePointerUp() {
     setIsDrawing(false);
     const canvas = signatureCanvasRef.current;
     if (!canvas) return;
-    setSignatureDataUrl(canvas.toDataURL("image/png"));
+    if (hasDrawn) {
+      setSignatureDataUrl(canvas.toDataURL("image/png"));
+    }
   }
 
   function clearSignature() {
@@ -538,6 +544,7 @@ export default function BusinessRegisterPage() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     setSignatureDataUrl(null);
     setSignatureConfirmed(false);
+    setHasDrawn(false);
   }
 
   /* ---------- Step handlers ---------- */
@@ -1657,9 +1664,10 @@ export default function BusinessRegisterPage() {
                             Signature confirmed
                           </div>
                         )}
+                        <div className="absolute left-4 right-4 bottom-6 border-b border-dashed border-gray-300 dark:border-slate-700 pointer-events-none" />
                         <canvas
                           ref={signatureCanvasRef}
-                          className="w-full h-40 touch-none"
+                          className="w-full h-40 touch-none bg-white"
                           onPointerDown={handlePointerDown}
                           onPointerMove={handlePointerMove}
                           onPointerUp={handlePointerUp}
