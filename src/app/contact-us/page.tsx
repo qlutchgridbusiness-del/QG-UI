@@ -28,6 +28,11 @@ export default function ContactUsPage() {
         <input placeholder="Enter Name" className="w-full border p-3 rounded-lg" />
         <input placeholder="Enter Mobile" className="w-full border p-3 rounded-lg" />
 
+        <textarea
+          placeholder="Enter Message"
+          className="w-full border p-3 rounded-lg min-h-[140px]"
+        />
+
         <button className="bg-indigo-600 text-white px-6 py-3 rounded-lg">
           Submit
         </button>

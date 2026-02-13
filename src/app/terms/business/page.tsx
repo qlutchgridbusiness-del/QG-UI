@@ -8,6 +8,12 @@ export default function BusinessTermsPage() {
   const [businessName, setBusinessName] = useState<string>("");
   const [signedDate, setSignedDate] = useState<string>("");
   const [signatureUrl, setSignatureUrl] = useState<string>("");
+  const todayLabel = new Date().toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const effectiveDate = signedDate || todayLabel;
 
   useEffect(() => {
     try {
@@ -50,13 +56,13 @@ export default function BusinessTermsPage() {
           QLUTCHGRID PARTNER AGREEMENT
         </h1>
         <p className="text-sm text-gray-600 dark:text-slate-400">
-          Effective Date: {signedDate || "To be filled on acceptance by the Partner"}
+          Effective Date: {effectiveDate}
         </p>
 
         <div className="space-y-4 text-sm text-gray-700 dark:text-slate-300 leading-6">
           <p>
-            This Partner Agreement (“Agreement”) is entered into on this ___ day
-            of ______, 20__, (“Effective Date”) by and between:
+            This Partner Agreement (“Agreement”) is entered into on{" "}
+            {effectiveDate} (“Effective Date”) by and between:
           </p>
           <p>
             RideLink Innovations Private Limited, a company incorporated under
@@ -489,13 +495,18 @@ export default function BusinessTermsPage() {
                   For QlutchGrid (RideLink Innovations Pvt. Ltd.)
                 </div>
                 <div className="mt-2 text-gray-800 dark:text-slate-200">
-                  Name: __________________
+                  Name: Preetham
                 </div>
                 <div className="text-gray-800 dark:text-slate-200">
-                  Designation: __________________
+                  Designation: Director
                 </div>
-                <div className="text-gray-800 dark:text-slate-200">
-                  Signature: __________________
+                <div className="text-gray-800 dark:text-slate-200">Signature:</div>
+                <div className="mt-2">
+                  <img
+                    src="/website_sign.png"
+                    alt="RideLink signature"
+                    className="h-16 object-contain border border-gray-200 dark:border-slate-700 rounded bg-white"
+                  />
                 </div>
               </div>
               <div className="border border-gray-200 dark:border-slate-800 rounded-lg p-3">
