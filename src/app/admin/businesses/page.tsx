@@ -67,7 +67,7 @@ export default function AdminBusinessesPage() {
           b.id === id
             ? {
                 ...b,
-                status: action === "activate" ? "ACTIVE" : "KYC_REJECTED",
+                status: action === "activate" ? "ACTIVE" : "SUSPENDED",
               }
             : b
         )
@@ -129,6 +129,8 @@ export default function AdminBusinessesPage() {
                   className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
                     b.status === "ACTIVE"
                       ? "bg-green-100 text-green-700"
+                      : b.status === "CONTRACT_PENDING"
+                      ? "bg-amber-100 text-amber-800"
                       : b.status.includes("KYC")
                       ? "bg-yellow-100 text-yellow-700"
                       : b.status === "SUSPENDED" ||
@@ -138,7 +140,9 @@ export default function AdminBusinessesPage() {
                       : "bg-gray-100 text-gray-700"
                   }`}
                 >
-                  {b.status.replaceAll("_", " ")}
+                  {b.status === "CONTRACT_PENDING"
+                    ? "Application Pending"
+                    : b.status.replaceAll("_", " ")}
                 </span>
                 {(!b.termsSignatureUrl || !b.termsAcceptedAt) && (
                   <span className="ml-2 inline-block px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
