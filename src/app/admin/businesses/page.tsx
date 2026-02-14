@@ -31,16 +31,13 @@ export default function AdminBusinessesPage() {
   useEffect(() => {
     const fetchBusinesses = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const user = process.env.NEXT_PUBLIC_ADMIN_USERNAME || "";
+        const pass = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "";
+        const auth = user && pass ? `Basic ${btoa(`${user}:${pass}`)}` : "";
 
-        const res = await axios.get(
-          `${API_BASE}/admin/businesses`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const res = await axios.get(`${API_BASE}/admin/businesses`, {
+          headers: auth ? { Authorization: auth } : {},
+        });
 
         // Adjust based on API response shape
         setBusinesses(res.data.businesses || res.data);
@@ -56,11 +53,17 @@ export default function AdminBusinessesPage() {
 
   async function updateStatus(id: string, action: "activate" | "suspend") {
     try {
-      const token = localStorage.getItem("token");
       await axios.post(
         `${API_BASE}/admin/businesses/${id}/${action}`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: (() => {
+            const user = process.env.NEXT_PUBLIC_ADMIN_USERNAME || "";
+            const pass = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "";
+            const auth = user && pass ? `Basic ${btoa(`${user}:${pass}`)}` : "";
+            return auth ? { Authorization: auth } : {};
+          })(),
+        }
       );
       setBusinesses((prev) =>
         prev.map((b) =>

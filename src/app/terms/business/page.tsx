@@ -505,7 +505,7 @@ export default function BusinessTermsPage() {
                   <img
                     src="/website_sign.png"
                     alt="RideLink signature"
-                    className="h-16 object-contain border border-gray-200 dark:border-slate-700 rounded bg-white"
+                    className="h-16 object-contain border border-gray-200 dark:border-slate-700 rounded !bg-white"
                   />
                 </div>
               </div>
@@ -520,7 +520,7 @@ export default function BusinessTermsPage() {
                   Authorized Signatory: {signatureName || "__________________"}
                 </div>
                 <div className="text-gray-800 dark:text-slate-200">
-                  Signature: {signatureName || "__________________"}
+                  Signature:
                 </div>
                 {signatureUrl && (
                   <div className="mt-2">

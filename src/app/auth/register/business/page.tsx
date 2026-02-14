@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
 import { apiPost, apiGet, apiPut, API_BASE } from "@/app/lib/api"; // your file earlier
-import { safeGetItem, safeSetItem } from "@/app/lib/safeStorage";
+import { safeGetItem, safeRemoveItem, safeSetItem } from "@/app/lib/safeStorage";
 import { UploadCard } from "@/app/business-dashboard/components/UploadCard";
 import BusinessPlanSelection from "./plans/page";
 
@@ -28,15 +28,14 @@ type BusinessPayload = {
   pancard?: string;
   aadhaarCard?: string;
   gst?: string;
+  bankAccountName?: string;
+  bankAccountNumber?: string;
+  bankIfsc?: string;
+  bankName?: string;
+  bankBranch?: string;
   openingHours?: object; // shape { mon: {open:true, from:"09:00", to:"18:00"}, ...}
   logoKey?: string | null;
   coverKey?: string | null;
-
-  // UI-only previews
-  pancardPreview?: string;
-  aadhaarCardPreview?: string;
-  logoKeyPreview?: string;
-  coverKeyPreview?: string;
 };
 
 const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
@@ -61,6 +60,7 @@ export default function BusinessRegisterPage() {
   const [addressQuery, setAddressQuery] = useState("");
   const [addressResults, setAddressResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement | null>(null);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -81,6 +81,11 @@ export default function BusinessRegisterPage() {
             pancard: "",
             aadhaarCard: "",
             gst: "",
+            bankAccountName: "",
+            bankAccountNumber: "",
+            bankIfsc: "",
+            bankName: "",
+            bankBranch: "",
             openingHours: {},
             logoKey: null,
             coverKey: null,
@@ -151,10 +156,18 @@ export default function BusinessRegisterPage() {
   useEffect(() => {
     // save draft locally
     safeSetItem("business:register", JSON.stringify(payload));
+    const currentPhone = safeGetItem("verifiedPhone");
+    if (currentPhone) {
+      safeSetItem("business:draftPhone", currentPhone);
+    }
   }, [payload]);
 
   useEffect(() => {
     safeSetItem("business:services", JSON.stringify(services));
+    const currentPhone = safeGetItem("verifiedPhone");
+    if (currentPhone) {
+      safeSetItem("business:draftPhone", currentPhone);
+    }
   }, [services]);
 
   useEffect(() => {
@@ -217,6 +230,14 @@ export default function BusinessRegisterPage() {
     const existing = safeGetItem("businessId");
     if (existing) {
       setSavedBusinessId(existing);
+    }
+    const draftPhone = safeGetItem("business:draftPhone");
+    const currentPhone = safeGetItem("verifiedPhone");
+    if (draftPhone && currentPhone && draftPhone !== currentPhone) {
+      safeRemoveItem("business:register");
+      safeRemoveItem("business:services");
+      safeRemoveItem("businessId");
+      safeRemoveItem("business:draftPhone");
     }
   }, []);
 
@@ -594,12 +615,68 @@ export default function BusinessRegisterPage() {
     setPayload((p) => ({ ...p, ...partial }));
   }
 
-  function next() {
-    if (step === 2 && !kycStatus?.panVerified) {
-      setStepError("Please verify PAN before continuing.");
-      return;
+  function validateStep(stepIndex: number) {
+    if (stepIndex === 1) {
+      if (!payload.name?.trim()) return "Business name is required.";
+      if (!payload.phone?.trim() || !/^[6-9]\d{9}$/.test(payload.phone.trim())) {
+        return "Valid 10-digit phone number is required.";
+      }
+      if (!payload.email?.trim()) return "Email is required.";
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email.trim())) {
+        return "Enter a valid email address.";
+      }
+      if (!payload.category || payload.category.length === 0) {
+        return "Select at least one category.";
+      }
+      if (!payload.address?.trim()) return "Business address is required.";
+      if (!payload.latitude?.toString().trim() || !payload.longitude?.toString().trim()) {
+        return "Please allow location access or select an address from suggestions.";
+      }
     }
 
+    if (stepIndex === 2) {
+      if (!payload.pancard?.trim()) return "PAN number is required.";
+      if (!isValidPan(payload.pancard.trim())) return "Enter a valid PAN number.";
+      if (!kycStatus?.panVerified) return "Please verify PAN before continuing.";
+      if (!payload.bankAccountName?.trim()) return "Account holder name is required.";
+      if (!payload.bankAccountNumber?.trim()) return "Account number is required.";
+      if (!payload.bankIfsc?.trim()) return "IFSC code is required.";
+      if (!payload.bankName?.trim()) return "Bank name is required.";
+      if (!payload.bankBranch?.trim()) return "Bank branch is required.";
+    }
+
+    if (stepIndex === 3) {
+      const hours = payload.openingHours || {};
+      const openDays = Object.values(hours).filter(
+        (d: any) => d?.open && d?.from && d?.to
+      );
+      if (openDays.length === 0) {
+        return "Select at least one working day with hours.";
+      }
+    }
+
+    if (stepIndex === 5) {
+      const named = services.filter((s) => s.name?.trim());
+      if (named.length < 3) return "Please add at least 3 services.";
+      for (const s of named) {
+        if (s.pricingType === "FIXED" && !s.price) {
+          return `Enter a price for service "${s.name}".`;
+        }
+        if (s.pricingType === "RANGE" && (!s.minPrice || !s.maxPrice)) {
+          return `Enter a price range for service "${s.name}".`;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  function next() {
+    const err = validateStep(step);
+    if (err) {
+      setStepError(err);
+      return;
+    }
     setStepError(null);
     setStep((s) => Math.min(6, s + 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -652,6 +729,7 @@ export default function BusinessRegisterPage() {
 
     setAddressQuery(result.display_name);
     setAddressResults([]);
+    setLocationError(null);
   }
 
   async function handleUseCurrentLocation() {
@@ -660,6 +738,7 @@ export default function BusinessRegisterPage() {
       return;
     }
 
+    setLocationError(null);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const lat = pos.coords.latitude;
@@ -679,21 +758,36 @@ export default function BusinessRegisterPage() {
 
           setAddressQuery(data.display_name || "");
           setAddressResults([]);
+          setLocationError(null);
         } catch {
           updatePayload({
             address: "Current location",
             latitude: String(lat),
             longitude: String(lon),
           });
+          setLocationError(null);
         }
       },
-      () => alert("Unable to fetch location")
+      (err) => {
+        let message = "Unable to fetch location. Please try again.";
+        if (err?.code === 1) {
+          message =
+            "Location permission denied. Enable Location Services for Safari and try again.";
+        } else if (err?.code === 2) {
+          message =
+            "Location unavailable. Move to an open area and try again.";
+        } else if (err?.code === 3) {
+          message = "Location request timed out. Please try again.";
+        }
+        setLocationError(message);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   }
 
   async function handleFileUpload(
     file: File,
-    field: "logoKey" | "coverKey" | "pancard" | "aadhaarCard"
+    field: "logoKey" | "coverKey"
   ) {
     if (!file) return;
 
@@ -711,9 +805,9 @@ export default function BusinessRegisterPage() {
   }
 
   async function submitAll() {
-    const hasValidService = services.some((s) => s.name?.trim());
-    if (!hasValidService) {
-      alert("Please add at least one service");
+    const err = validateStep(5);
+    if (err) {
+      setStepError(err);
       return;
     }
 
@@ -729,13 +823,23 @@ export default function BusinessRegisterPage() {
 
       let businessId = savedBusinessId;
 
+      const normalizedPayload = {
+        ...payload,
+        latitude: payload.latitude?.toString().trim()
+          ? payload.latitude
+          : null,
+        longitude: payload.longitude?.toString().trim()
+          ? payload.longitude
+          : null,
+      };
+
       if (!businessId) {
-        const res = await apiPost("/business", payload, authToken);
+        const res = await apiPost("/business", normalizedPayload, authToken);
         businessId = res.id;
         setSavedBusinessId(businessId);
         localStorage.setItem("businessId", businessId);
       } else {
-        await apiPut(`/business/${businessId}`, payload, authToken);
+        await apiPut(`/business/${businessId}`, normalizedPayload, authToken);
       }
 
       await apiPost(
@@ -947,7 +1051,15 @@ export default function BusinessRegisterPage() {
                     <div className="relative">
                       <input
                         value={addressQuery}
-                        onChange={(e) => setAddressQuery(e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setAddressQuery(value);
+                          updatePayload({
+                            address: value,
+                            latitude: "",
+                            longitude: "",
+                          });
+                        }}
                         placeholder="Search area, street, landmark…"
                         className="w-full p-3 pl-10 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                       />
@@ -974,6 +1086,11 @@ export default function BusinessRegisterPage() {
                     >
                       📍 Use my current location
                     </button>
+                    {locationError && (
+                      <div className="mt-2 text-xs text-red-600">
+                        {locationError}
+                      </div>
+                    )}
                   </div>
                 </section>
                 )}
@@ -1136,25 +1253,68 @@ export default function BusinessRegisterPage() {
                     </div>
                   </div>
 
-                  {/* Uploads */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <UploadCard
-                      label="PAN Card Image"
-                      preview={(payload as any).pancardPreview}
-                      onUpload={(file) => handleFileUpload(file, "pancard")}
-                    />
+                  {/* Bank Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm mb-1 block">Account Holder Name</label>
+                      <input
+                        value={payload.bankAccountName || ""}
+                        onChange={(e) =>
+                          updatePayload({ bankAccountName: e.target.value })
+                        }
+                        placeholder="Name as per bank"
+                        className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+                      />
+                    </div>
 
-                    <UploadCard
-                      label="Aadhaar Image (Front / Back)"
-                      preview={(payload as any).aadhaarCardPreview}
-                      onUpload={(file) => handleFileUpload(file, "aadhaarCard")}
-                    />
+                    <div>
+                      <label className="text-sm mb-1 block">Account Number</label>
+                      <input
+                        value={payload.bankAccountNumber || ""}
+                        onChange={(e) =>
+                          updatePayload({ bankAccountNumber: e.target.value })
+                        }
+                        placeholder="Account number"
+                        className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm mb-1 block">IFSC Code</label>
+                      <input
+                        value={payload.bankIfsc || ""}
+                        onChange={(e) =>
+                          updatePayload({ bankIfsc: e.target.value.toUpperCase() })
+                        }
+                        placeholder="IFSC Code"
+                        className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm mb-1 block">Bank Name</label>
+                      <input
+                        value={payload.bankName || ""}
+                        onChange={(e) =>
+                          updatePayload({ bankName: e.target.value })
+                        }
+                        placeholder="Bank name"
+                        className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="text-sm mb-1 block">Branch</label>
+                      <input
+                        value={payload.bankBranch || ""}
+                        onChange={(e) =>
+                          updatePayload({ bankBranch: e.target.value })
+                        }
+                        placeholder="Branch"
+                        className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+                      />
+                    </div>
                   </div>
-
-                  <p className="text-xs text-gray-500 dark:text-slate-400 text-center">
-                    🔒 Your documents are encrypted and used only for
-                    verification
-                  </p>
                 </section>
               )}
 
@@ -1407,6 +1567,9 @@ export default function BusinessRegisterPage() {
                   <h4 className="text-xl font-bold text-gray-900 dark:text-slate-100">Services you offer</h4>
                     <p className="text-sm text-gray-500 dark:text-slate-400">
                       Add services customers can book from your business
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">
+                      Minimum 3 services are required to proceed. ({services.length}/3)
                     </p>
                   </div>
 

@@ -18,6 +18,23 @@ function buildHeaders(isJson = true, token?: string) {
   };
 }
 
+function buildAdminHeaders(isJson = true) {
+  const user = process.env.NEXT_PUBLIC_ADMIN_USERNAME || "";
+  const pass = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "";
+  if (!user || !pass) {
+    return {
+      ...(isJson ? { "Content-Type": "application/json" } : {}),
+    };
+  }
+  const encoded = typeof window !== "undefined"
+    ? btoa(`${user}:${pass}`)
+    : Buffer.from(`${user}:${pass}`).toString("base64");
+  return {
+    ...(isJson ? { "Content-Type": "application/json" } : {}),
+    Authorization: `Basic ${encoded}`,
+  };
+}
+
 // -------------------------------
 // GET
 // -------------------------------
@@ -152,5 +169,4 @@ export async function deliverVehicle(id: string) {
     { headers: authHeader() }
   );
 }
-
 

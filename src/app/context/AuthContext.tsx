@@ -6,7 +6,7 @@ import { safeClear, safeGetItem, safeRemoveItem, safeSetItem } from "@/app/lib/s
 type User = {
   id: string;
   phone: string;
-  role: "USER" | "BUSINESS" | "ADMIN";
+  role: "USER" | "BUSINESS";
 };
 
 export type AuthContextType = {
@@ -14,7 +14,7 @@ export type AuthContextType = {
     id: string;
     name?: string;
     phone: string;
-    role: "USER" | "BUSINESS" | "ADMIN";
+    role: "USER" | "BUSINESS";
   } | null;
 
   token: string | null;
@@ -22,7 +22,7 @@ export type AuthContextType = {
   isAuthenticated: boolean;
   isAuthReady: boolean;
 
-  role: "USER" | "BUSINESS" | "ADMIN";
+  role: "USER" | "BUSINESS";
 
   businesses: {
     id: string;

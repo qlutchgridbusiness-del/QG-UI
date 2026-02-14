@@ -44,9 +44,11 @@ export default function BusinessDetailPage() {
 
   async function fetchBusiness() {
     try {
-      const token = localStorage.getItem("token");
+      const user = process.env.NEXT_PUBLIC_ADMIN_USERNAME || "";
+      const pass = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "";
+      const auth = user && pass ? `Basic ${btoa(`${user}:${pass}`)}` : "";
       const res = await axios.get(`${API_BASE}/admin/businesses/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: auth ? { Authorization: auth } : {},
       });
       setBusiness(res.data);
     } catch (err) {
@@ -58,11 +60,17 @@ export default function BusinessDetailPage() {
 
   async function updateStatus(action: "activate" | "suspend") {
     try {
-      const token = localStorage.getItem("token");
       await axios.post(
         `${API_BASE}/admin/businesses/${id}/${action}`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: (() => {
+            const user = process.env.NEXT_PUBLIC_ADMIN_USERNAME || "";
+            const pass = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "";
+            const auth = user && pass ? `Basic ${btoa(`${user}:${pass}`)}` : "";
+            return auth ? { Authorization: auth } : {};
+          })(),
+        }
       );
       await fetchBusiness();
     } catch (err) {
@@ -73,11 +81,17 @@ export default function BusinessDetailPage() {
 
   async function requestSignatureReupload() {
     try {
-      const token = localStorage.getItem("token");
       await axios.post(
         `${API_BASE}/admin/businesses/${id}/request-signature`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: (() => {
+            const user = process.env.NEXT_PUBLIC_ADMIN_USERNAME || "";
+            const pass = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "";
+            const auth = user && pass ? `Basic ${btoa(`${user}:${pass}`)}` : "";
+            return auth ? { Authorization: auth } : {};
+          })(),
+        }
       );
       await fetchBusiness();
       alert("Signature re-upload requested.");

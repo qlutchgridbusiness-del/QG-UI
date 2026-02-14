@@ -19,16 +19,13 @@ export default function UsersPreview() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const user = process.env.NEXT_PUBLIC_ADMIN_USERNAME || "";
+        const pass = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "";
+        const auth = user && pass ? `Basic ${btoa(`${user}:${pass}`)}` : "";
 
-        const res = await axios.get(
-          `${API_BASE}/admin/users`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const res = await axios.get(`${API_BASE}/admin/users`, {
+          headers: auth ? { Authorization: auth } : {},
+        });
 
         // adjust if your API shape differs
         setUsers(res.data.users || res.data);

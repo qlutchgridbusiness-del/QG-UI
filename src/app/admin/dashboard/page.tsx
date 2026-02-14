@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { StatCard } from "../components/StatCard";
-import { apiGet } from "@/app/lib/api";
+import { API_BASE } from "@/app/lib/api";
 
 type DashboardStats = {
   pendingKyc: number;
@@ -15,7 +15,13 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
 
   useEffect(() => {
-    apiGet("/admin/dashboard")
+    const user = process.env.NEXT_PUBLIC_ADMIN_USERNAME || "";
+    const pass = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "";
+    const auth = user && pass ? `Basic ${btoa(`${user}:${pass}`)}` : "";
+    fetch(`${API_BASE}/admin/dashboard`, {
+      headers: auth ? { Authorization: auth } : {},
+    })
+      .then((r) => r.json())
       .then(setStats)
       .catch(console.error);
   }, []);
