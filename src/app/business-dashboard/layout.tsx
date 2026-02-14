@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiGet } from "@/app/lib/api";
 import { playNotificationSound } from "@/utils/sound";
+import { useAuth } from "@/app/context/AuthContext";
 
 export default function BusinessDashboardLayout({
   children,
@@ -16,8 +17,14 @@ export default function BusinessDashboardLayout({
   const prevMapRef = useRef<Record<string, string>>({});
   const [checkingStatus, setCheckingStatus] = useState(true);
   const router = useRouter();
+  const { isAuthReady, role } = useAuth();
 
   useEffect(() => {
+    if (!isAuthReady) return;
+    if (role === "ADMIN") {
+      router.replace("/admin");
+      return;
+    }
     const token = localStorage.getItem("token");
     if (!token) return;
 

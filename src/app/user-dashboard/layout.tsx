@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiGet } from "@/app/lib/api";
 import { playNotificationSound } from "@/utils/sound";
+import { useAuth } from "@/app/context/AuthContext";
 
 export default function UserDashboardLayout({
   children,
@@ -11,6 +12,7 @@ export default function UserDashboardLayout({
   children: ReactNode;
 }) {
   const router = useRouter();
+  const { isAuthReady, role } = useAuth();
   const [hasUpdates, setHasUpdates] = useState(false);
   const [pendingPayments, setPendingPayments] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
@@ -22,6 +24,11 @@ export default function UserDashboardLayout({
   const prevMapRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
+    if (!isAuthReady) return;
+    if (role === "ADMIN") {
+      router.replace("/admin");
+      return;
+    }
     const token = localStorage.getItem("token");
     if (!token) return;
 

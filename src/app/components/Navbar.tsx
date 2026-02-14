@@ -114,6 +114,45 @@ export default function Navbar() {
                 Get Started
               </button>
             )
+          ) : role === "ADMIN" ? (
+            <div className="relative">
+              <div className="relative">
+                <FaUserCircle
+                  onClick={() => setOpen((v) => !v)}
+                  className="text-3xl text-gray-900 dark:text-slate-100 cursor-pointer hover:text-indigo-600 transition"
+                />
+              </div>
+
+              <AnimatePresence>
+                {open && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 mt-3 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 p-2"
+                  >
+                    <NavItem
+                      label="Admin Dashboard"
+                      onClick={() => {
+                        setOpen(false);
+                        router.push("/admin");
+                      }}
+                    />
+                    <Divider />
+                    <ActionItem
+                      label="Logout"
+                      danger
+                      onClick={() => {
+                        setOpen(false);
+                        logout();
+                        router.push("/auth/login?admin=1");
+                      }}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           ) : (
             <div className="relative">
               <div className="relative">

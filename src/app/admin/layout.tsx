@@ -1,15 +1,35 @@
-import AdminHeader from "./components/AdminHeader";
-import AdminSidebar from "./components/AdminSidebar";
+"use client";
 
-export default function AdminLayout({ children }) {
-  return (
-    <div className="min-h-screen flex bg-gray-100">
-      <AdminSidebar />
+import { ReactNode, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/AuthContext";
 
-      <div className="flex-1 flex flex-col">
-        <AdminHeader />
-        <main className="p-4 md:p-6">{children}</main>
+export default function AdminLayout({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const { isAuthReady, isAuthenticated, role } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthReady) return;
+    if (!isAuthenticated || role !== "ADMIN") {
+      router.replace("/auth/login?admin=1");
+    }
+  }, [isAuthReady, isAuthenticated, role, router]);
+
+  if (!isAuthReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-sm text-gray-500">
+        Checking admin access…
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (!isAuthenticated || role !== "ADMIN") {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-sm text-gray-500">
+        Redirecting…
+      </div>
+    );
+  }
+
+  return <>{children}</>;
 }

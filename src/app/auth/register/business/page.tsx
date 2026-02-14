@@ -145,6 +145,7 @@ export default function BusinessRegisterPage() {
   const [termsSubmitting, setTermsSubmitting] = useState(false);
   const [termsError, setTermsError] = useState<string | null>(null);
   const [termsSubmitted, setTermsSubmitted] = useState(false);
+  const [planActivated, setPlanActivated] = useState(false);
   const [stepError, setStepError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -1779,9 +1780,36 @@ export default function BusinessRegisterPage() {
                       <BusinessPlanSelection
                         businessId={savedBusinessId}
                         onActivated={() => {
-                          setPendingMode(true);
+                          setPlanActivated(true);
                         }}
                       />
+                      {planActivated && (
+                        <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (!savedBusinessId) return;
+                              try {
+                                const authToken = getAuthToken();
+                                if (!authToken) return;
+                                await apiPost(`/business/${savedBusinessId}/submit`, {}, authToken);
+                                setPendingMode(true);
+                              } catch (e: any) {
+                                setTermsError(
+                                  e?.message || "Failed to submit application"
+                                );
+                              }
+                            }}
+                            className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg font-semibold"
+                          >
+                            Submit Application
+                          </button>
+                          <div className="text-xs text-gray-500 dark:text-slate-400">
+                            Submit after selecting a plan to send your application
+                            for review.
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                   {pendingMode && (
