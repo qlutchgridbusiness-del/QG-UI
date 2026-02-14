@@ -12,7 +12,7 @@ export default function UserRegisterPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [phone, setPhone] = useState<string | null>(null);
-  const [tempToken, setTempToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -25,7 +25,7 @@ export default function UserRegisterPage() {
   -------------------------- */
   useEffect(() => {
     const p = safeGetItem("verifiedPhone");
-    const t = safeGetItem("tempToken");
+    const t = safeGetItem("token");
 
     if (!p || !t) {
       router.replace("/auth/login");
@@ -33,7 +33,7 @@ export default function UserRegisterPage() {
     }
 
     setPhone(p);
-    setTempToken(t);
+    setToken(t);
   }, [router]);
 
   /* -------------------------
@@ -42,7 +42,7 @@ export default function UserRegisterPage() {
   async function submitRegistration() {
     setError(null);
 
-    if (!phone || !tempToken) {
+    if (!phone || !token) {
       setError("Session expired. Please login again.");
       return;
     }
@@ -74,11 +74,10 @@ export default function UserRegisterPage() {
           name: form.name.trim(),
           email: form.email.trim(),
         },
-        tempToken // 👈 temp JWT (NOT full auth token)
+        token // 👈 auth token
       );
 
       // 🔐 Cleanup temp auth
-      safeRemoveItem("tempToken");
       safeRemoveItem("verifiedPhone");
 
       // ✅ Save real auth

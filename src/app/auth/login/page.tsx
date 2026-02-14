@@ -75,9 +75,9 @@ function LoginPageInner() {
 
       // 🆕 New user → go to register choice
       if (res.isNewUser) {
-        const tempToken = res.tempToken ?? res.token ?? "";
-        if (tempToken) {
-          safeSetItem("tempToken", tempToken);
+        const token = res.token ?? "";
+        if (token) {
+          safeSetItem("token", token);
         }
         // Reset any previous registration drafts when a new phone verifies
         const previousPhone = safeGetItem("verifiedPhone");
@@ -90,8 +90,8 @@ function LoginPageInner() {
           safeRemoveItem("user:draftPhone");
         }
         safeSetItem("verifiedPhone", phone);
-        safeRemoveItem("token");
-        safeRemoveItem("user");
+        safeSetItem("user", JSON.stringify(res.user));
+        login(res);
 
         router.push("/auth/register");
 

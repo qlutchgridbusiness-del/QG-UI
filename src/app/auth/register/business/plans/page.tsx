@@ -75,7 +75,7 @@ export default function PlansPage({
 
     const token =
       typeof window !== "undefined"
-        ? localStorage.getItem("token") || localStorage.getItem("tempToken")
+        ? localStorage.getItem("token")
         : undefined;
 
     setError(null);

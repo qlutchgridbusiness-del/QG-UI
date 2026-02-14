@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { apiPost, apiGet, apiPut, API_BASE } from "@/app/lib/api"; // your file earlier
 import { safeGetItem, safeRemoveItem, safeSetItem } from "@/app/lib/safeStorage";
 import { UploadCard } from "@/app/business-dashboard/components/UploadCard";
@@ -53,6 +54,7 @@ function uid(prefix = "") {
 
 /* ---------- Main Page ---------- */
 export default function BusinessRegisterPage() {
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<number>(1);
   const [submitting, setSubmitting] = useState(false);
   const [savedBusinessId, setSavedBusinessId] = useState<string | null>(null);
@@ -64,36 +66,50 @@ export default function BusinessRegisterPage() {
   const logoInputRef = useRef<HTMLInputElement | null>(null);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
 
+  const emptyPayload: BusinessPayload = {
+    name: "",
+    phone: "",
+    email: "",
+    category: [],
+    address: "",
+    latitude: "",
+    longitude: "",
+    pancard: "",
+    aadhaarCard: "",
+    gst: "",
+    bankAccountName: "",
+    bankAccountNumber: "",
+    bankIfsc: "",
+    bankName: "",
+    bankBranch: "",
+    openingHours: {},
+    logoKey: null,
+    coverKey: null,
+  };
+
   const [payload, setPayload] = useState<BusinessPayload>(() => {
     try {
       const raw = safeGetItem("business:register");
 
       return raw
         ? JSON.parse(raw)
-        : {
-            name: "",
-            phone: "",
-            email: "",
-            category: [],
-            address: "",
-            latitude: "",
-            longitude: "",
-            pancard: "",
-            aadhaarCard: "",
-            gst: "",
-            bankAccountName: "",
-            bankAccountNumber: "",
-            bankIfsc: "",
-            bankName: "",
-            bankBranch: "",
-            openingHours: {},
-            logoKey: null,
-            coverKey: null,
-          };
+        : emptyPayload;
     } catch {
-      return {} as BusinessPayload;
+      return emptyPayload;
     }
   });
+
+  const emptyServices: ServiceRow[] = [
+    {
+      id: uid("s_"),
+      name: "",
+      price: null,
+      minPrice: null,
+      maxPrice: null,
+      durationMinutes: 30,
+      available: true,
+    },
+  ];
 
   const [services, setServices] = useState<ServiceRow[]>(() => {
     try {
@@ -105,29 +121,9 @@ export default function BusinessRegisterPage() {
             pricingType: s.pricingType === "QUOTATION" ? "QUOTE" : s.pricingType,
           }))
         : null;
-      return normalized ?? [
-            {
-              id: uid("s_"),
-              name: "",
-              price: null,
-              minPrice: null,
-              maxPrice: null,
-              durationMinutes: 30,
-              available: true,
-            },
-          ];
+      return normalized ?? emptyServices;
     } catch (e) {
-      return [
-        {
-          id: uid("s_"),
-          name: "",
-          price: null,
-          minPrice: null,
-          maxPrice: null,
-          durationMinutes: 30,
-          available: true,
-        },
-      ];
+      return emptyServices;
     }
   });
 
@@ -152,6 +148,52 @@ export default function BusinessRegisterPage() {
   const [termsSubmitted, setTermsSubmitted] = useState(false);
   const [planActivated, setPlanActivated] = useState(false);
   const [stepError, setStepError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const isPending = searchParams.get("pending") === "1";
+    if (!isPending) {
+      const verifiedPhone = safeGetItem("verifiedPhone");
+      const storedUserRaw = safeGetItem("user");
+      if (verifiedPhone && storedUserRaw) {
+        try {
+          const storedUser = JSON.parse(storedUserRaw);
+          if (storedUser?.phone && storedUser.phone !== verifiedPhone) {
+            safeRemoveItem("token");
+            safeRemoveItem("user");
+          }
+        } catch {
+          safeRemoveItem("user");
+        }
+      }
+      safeRemoveItem("business:register");
+      safeRemoveItem("business:services");
+      safeRemoveItem("businessId");
+      safeRemoveItem("business:draftPhone");
+      setSavedBusinessId(null);
+      setPendingMode(false);
+      setPlanActivated(false);
+      setTermsSubmitted(false);
+      setTermsAccepted(false);
+      setSignatureName("");
+      setSignatureDataUrl(null);
+      setSignatureConfirmed(false);
+      setHasDrawn(false);
+      setStepError(null);
+      setPayload(emptyPayload);
+      setServices([
+        {
+          id: uid("s_"),
+          name: "",
+          price: null,
+          minPrice: null,
+          maxPrice: null,
+          durationMinutes: 30,
+          available: true,
+        },
+      ]);
+      setStep(1);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     // save draft locally
@@ -254,7 +296,15 @@ export default function BusinessRegisterPage() {
           setSavedBusinessId(biz.id);
           safeSetItem("businessId", biz.id);
         }
-        if (biz?.status === "CONTRACT_PENDING") {
+        if (
+          biz?.status === "CONTRACT_PENDING" &&
+          biz?.planStatus === "ACTIVE" &&
+          biz?.planActivatedAt &&
+          biz?.planId &&
+          biz?.termsAcceptedAt &&
+          biz?.termsSignatureName &&
+          biz?.termsSignatureUrl
+        ) {
           setPendingMode(true);
         }
       })
@@ -322,46 +372,43 @@ export default function BusinessRegisterPage() {
   }
 
   function getAuthToken() {
-    return localStorage.getItem("token") || localStorage.getItem("tempToken");
+    return localStorage.getItem("token");
+  }
+
+  function resetDraft() {
+    safeRemoveItem("business:register");
+    safeRemoveItem("business:services");
+    safeRemoveItem("businessId");
+    safeRemoveItem("business:draftPhone");
+    setSavedBusinessId(null);
+    setPendingMode(false);
+    setPlanActivated(false);
+    setTermsSubmitted(false);
+    setTermsAccepted(false);
+    setSignatureName("");
+    setSignatureDataUrl(null);
+    setSignatureConfirmed(false);
+    setHasDrawn(false);
+    setStepError(null);
+    setPayload(emptyPayload);
+    setServices([
+      {
+        id: uid("s_"),
+        name: "",
+        price: null,
+        minPrice: null,
+        maxPrice: null,
+        durationMinutes: 30,
+        available: true,
+      },
+    ]);
+    setStep(1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function ensureOwnerToken() {
-    const tempToken = localStorage.getItem("tempToken");
     const existingToken = localStorage.getItem("token");
-
-    // If we still have a temp token (new OTP flow), always finalize user first
-    if (tempToken) {
-      const verifiedPhone =
-        localStorage.getItem("verifiedPhone") || payload.phone;
-      if (!verifiedPhone) return null;
-      if (!payload.name?.trim() || !payload.email?.trim()) return null;
-
-      try {
-        const res = await apiPost(
-          "/auth/register",
-          {
-            role: "business",
-            phone: verifiedPhone,
-            name: payload.name.trim(),
-            email: payload.email.trim(),
-          },
-          tempToken
-        );
-
-        localStorage.removeItem("tempToken");
-        localStorage.removeItem("verifiedPhone");
-        localStorage.setItem("token", res.token);
-        localStorage.setItem("user", JSON.stringify(res.user));
-
-        return res.token as string;
-      } catch {
-        return null;
-      }
-    }
-
-    if (existingToken) return existingToken;
-
-    return null;
+    return existingToken || null;
   }
 
   function isValidPan(pan: string) {
@@ -1013,7 +1060,16 @@ export default function BusinessRegisterPage() {
                 {/* Step content */}
                 {step === 1 && (
                 <section className="space-y-4">
-                  <h4 className="text-xl font-bold text-gray-900 dark:text-slate-100">Business basics</h4>
+                  <div className="flex items-center justify-between gap-3">
+                    <h4 className="text-xl font-bold text-gray-900 dark:text-slate-100">Business basics</h4>
+                    <button
+                      type="button"
+                      onClick={resetDraft}
+                      className="text-xs text-red-600 hover:underline"
+                    >
+                      Start fresh
+                    </button>
+                  </div>
 
                   {/* Mobile: 1 col | Desktop: 2 col */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
