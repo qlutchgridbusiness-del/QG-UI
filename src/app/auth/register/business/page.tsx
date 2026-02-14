@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-import { useSearchParams } from "next/navigation";
 import { apiPost, apiGet, apiPut, API_BASE } from "@/app/lib/api"; // your file earlier
 import { safeGetItem, safeRemoveItem, safeSetItem } from "@/app/lib/safeStorage";
 import { UploadCard } from "@/app/business-dashboard/components/UploadCard";
@@ -54,7 +53,6 @@ function uid(prefix = "") {
 
 /* ---------- Main Page ---------- */
 export default function BusinessRegisterPage() {
-  const searchParams = useSearchParams();
   const [step, setStep] = useState<number>(1);
   const [submitting, setSubmitting] = useState(false);
   const [savedBusinessId, setSavedBusinessId] = useState<string | null>(null);
@@ -150,7 +148,9 @@ export default function BusinessRegisterPage() {
   const [stepError, setStepError] = useState<string | null>(null);
 
   useEffect(() => {
-    const isPending = searchParams.get("pending") === "1";
+    const isPending =
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).get("pending") === "1";
     if (!isPending) {
       const verifiedPhone = safeGetItem("verifiedPhone");
       const storedUserRaw = safeGetItem("user");
@@ -193,7 +193,7 @@ export default function BusinessRegisterPage() {
       ]);
       setStep(1);
     }
-  }, [searchParams]);
+  }, []);
 
   useEffect(() => {
     // save draft locally
