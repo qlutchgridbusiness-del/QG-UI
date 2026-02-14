@@ -310,7 +310,7 @@ export default function BusinessRegisterPage() {
       <div className="min-h-screen bg-white flex items-center justify-center px-6">
         <div className="max-w-xl text-center space-y-4">
           <h1 className="text-2xl font-semibold text-gray-900">
-            Your application is pending
+            Your application is Under review
           </h1>
           <p className="text-gray-600">
             Kindly wait for 24 to 48 hours. We are reviewing your submission and
@@ -323,6 +323,45 @@ export default function BusinessRegisterPage() {
 
   function getAuthToken() {
     return localStorage.getItem("token") || localStorage.getItem("tempToken");
+  }
+
+  async function ensureOwnerToken() {
+    const tempToken = localStorage.getItem("tempToken");
+    const existingToken = localStorage.getItem("token");
+
+    // If we still have a temp token (new OTP flow), always finalize user first
+    if (tempToken) {
+      const verifiedPhone =
+        localStorage.getItem("verifiedPhone") || payload.phone;
+      if (!verifiedPhone) return null;
+      if (!payload.name?.trim() || !payload.email?.trim()) return null;
+
+      try {
+        const res = await apiPost(
+          "/auth/register",
+          {
+            role: "business",
+            phone: verifiedPhone,
+            name: payload.name.trim(),
+            email: payload.email.trim(),
+          },
+          tempToken
+        );
+
+        localStorage.removeItem("tempToken");
+        localStorage.removeItem("verifiedPhone");
+        localStorage.setItem("token", res.token);
+        localStorage.setItem("user", JSON.stringify(res.user));
+
+        return res.token as string;
+      } catch {
+        return null;
+      }
+    }
+
+    if (existingToken) return existingToken;
+
+    return null;
   }
 
   function isValidPan(pan: string) {
@@ -813,8 +852,7 @@ export default function BusinessRegisterPage() {
 
     setSubmitting(true);
     try {
-      const authToken =
-        localStorage.getItem("token") || localStorage.getItem("tempToken");
+      const authToken = await ensureOwnerToken();
       if (!authToken) {
         alert("Session expired. Please login again.");
         window.location.href = "/auth/login";
