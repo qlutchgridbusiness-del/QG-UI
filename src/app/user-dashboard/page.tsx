@@ -70,6 +70,14 @@ export default function UserDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const search = params.get("search")?.trim() || "";
+    if (!search) return;
+    setQuery(search);
+  }, [router]);
+
   /* ================= LOCATION ================= */
 
   function enableLocation() {
@@ -164,9 +172,18 @@ export default function UserDashboard() {
             {filtered.map((s) => (
               <div
                 key={s.id}
-                onClick={() =>
-                  router.push(`/business/${s.business.id}`)
-                }
+                onClick={() => {
+                  const token = localStorage.getItem("token");
+                  if (!token) {
+                    localStorage.setItem(
+                      "redirectAfterLogin",
+                      `/user-dashboard/bookings/${s.id}`
+                    );
+                    router.push("/auth/login");
+                    return;
+                  }
+                  router.push(`/user-dashboard/bookings/${s.id}`);
+                }}
                 className="
     relative
     cursor-pointer
