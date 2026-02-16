@@ -172,6 +172,14 @@ export default function BookServicePage() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        localStorage.setItem(
+          "redirectAfterLogin",
+          `/user-dashboard/bookings/${id}`
+        );
+        router.push("/auth/login");
+        return;
+      }
 
       await apiPost(
         "/bookings",
@@ -180,7 +188,7 @@ export default function BookServicePage() {
           serviceId: service!.id,
           scheduledAt: `${date}T${time}:00`,
         },
-        token || undefined
+        token
       );
 
       router.push("/user-dashboard/orders");

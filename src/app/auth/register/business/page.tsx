@@ -21,6 +21,7 @@ type BusinessPayload = {
   name: string;
   phone: string;
   email?: string;
+  offeringType?: "SERVICES" | "ACCESSORIES";
   category?: string[];
   address?: string;
   latitude?: string;
@@ -45,6 +46,7 @@ const CATEGORIES = [
   "Full service",
   "Accident repair",
   "Detailing",
+  "Accessories",
 ];
 
 function uid(prefix = "") {
@@ -68,6 +70,7 @@ export default function BusinessRegisterPage() {
     name: "",
     phone: "",
     email: "",
+    offeringType: "SERVICES",
     category: [],
     address: "",
     latitude: "",
@@ -743,7 +746,11 @@ export default function BusinessRegisterPage() {
 
     if (stepIndex === 5) {
       const named = services.filter((s) => s.name?.trim());
-      if (named.length < 3) return "Please add at least 3 services.";
+      if (named.length < 3) {
+        return payload.offeringType === "ACCESSORIES"
+          ? "Please add at least 3 accessories."
+          : "Please add at least 3 services.";
+      }
       for (const s of named) {
         if (s.pricingType === "FIXED" && !s.price) {
           return `Enter a price for service "${s.name}".`;
@@ -927,6 +934,19 @@ export default function BusinessRegisterPage() {
         await apiPut(`/business/${businessId}`, normalizedPayload, authToken);
       }
 
+      // Refresh token so role becomes BUSINESS immediately
+      try {
+        const refreshed = await apiPost("/auth/refresh", {}, authToken);
+        if (refreshed?.token) {
+          localStorage.setItem("token", refreshed.token);
+          if (refreshed.user) {
+            localStorage.setItem("user", JSON.stringify(refreshed.user));
+          }
+        }
+      } catch {
+        // ignore refresh failures
+      }
+
       await apiPost(
         `/business/${businessId}/services`,
         {
@@ -1069,6 +1089,37 @@ export default function BusinessRegisterPage() {
                     >
                       Start fresh
                     </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
+                      Offering type
+                    </label>
+                    <div className="flex flex-wrap gap-3">
+                      {[
+                        { label: "Services", value: "SERVICES" },
+                        { label: "Accessories", value: "ACCESSORIES" },
+                      ].map((opt) => {
+                        const selected = payload.offeringType === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => updatePayload({ offeringType: opt.value as any })}
+                            className={`px-4 py-2 rounded-full border text-sm transition ${
+                              selected
+                                ? "bg-indigo-600 text-white border-indigo-600"
+                                : "bg-white text-gray-700 dark:text-slate-300 border-gray-300 hover:border-indigo-400"
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">
+                      Choose what you primarily offer. You can still add details below.
+                    </p>
                   </div>
 
                   {/* Mobile: 1 col | Desktop: 2 col */}
@@ -1658,12 +1709,16 @@ export default function BusinessRegisterPage() {
                 <section className="space-y-6">
                   {/* Header */}
                   <div>
-                  <h4 className="text-xl font-bold text-gray-900 dark:text-slate-100">Services you offer</h4>
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-slate-100">
+                    {payload.offeringType === "ACCESSORIES"
+                      ? "Accessories you offer"
+                      : "Services you offer"}
+                  </h4>
                     <p className="text-sm text-gray-500 dark:text-slate-400">
                       Add services customers can book from your business
                     </p>
                     <p className="text-xs text-gray-500 dark:text-slate-400">
-                      Minimum 3 services are required to proceed. ({services.length}/3)
+                      Minimum 3 {payload.offeringType === "ACCESSORIES" ? "accessories" : "services"} are required to proceed. ({services.length}/3)
                     </p>
                   </div>
 

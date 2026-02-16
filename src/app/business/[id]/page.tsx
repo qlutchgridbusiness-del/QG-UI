@@ -93,7 +93,18 @@ export default function BusinessProfilePage() {
                 </div>
 
                 <button
-                  onClick={() => router.push(`/user-dashboard/bookings/${s.id}`)}
+                  onClick={() => {
+                    const token = localStorage.getItem("token");
+                    if (!token) {
+                      localStorage.setItem(
+                        "redirectAfterLogin",
+                        `/user-dashboard/bookings/${s.id}`
+                      );
+                      router.push("/auth/login");
+                      return;
+                    }
+                    router.push(`/user-dashboard/bookings/${s.id}`);
+                  }}
                   className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm"
                 >
                   Book

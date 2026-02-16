@@ -101,7 +101,15 @@ function LoginPageInner() {
       // Existing user
       safeSetItem("token", res.token);
       safeSetItem("user", JSON.stringify(res.user));
+      safeRemoveItem("verifiedPhone");
       login(res);
+
+      const redirect = safeGetItem("redirectAfterLogin");
+      if (redirect) {
+        safeRemoveItem("redirectAfterLogin");
+        router.push(redirect);
+        return;
+      }
 
       if (res.user.role === "BUSINESS") {
         try {
