@@ -37,9 +37,9 @@ export default function Navbar() {
   const isLoggedIn = isAuthenticated;
 
   useEffect(() => {
-    const temp = safeGetItem("tempToken") || safeGetItem("verifiedPhone");
+    const temp = safeGetItem("verifiedPhone");
     setHasTempAuth(Boolean(temp));
-  }, []);
+  }, [isAuthenticated, pathname]);
 
   useEffect(() => {
     if (!isAuthenticated || !isAuthReady) return;

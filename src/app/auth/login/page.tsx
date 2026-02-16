@@ -8,6 +8,7 @@ import { useAuth } from "@/app/context/AuthContext";
 
 function LoginPageInner() {
   const [phone, setPhone] = useState("");
+  const [role, setRole] = useState<"user" | "business">("user");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState<"PHONE" | "OTP">("PHONE");
   const [loading, setLoading] = useState(false);
@@ -51,7 +52,7 @@ function LoginPageInner() {
 
     setLoading(true);
     try {
-      await apiPost("/auth/request-otp", { phone });
+      await apiPost("/auth/request-otp", { phone, role });
       setStep("OTP");
       startCooldown(30);
     } catch (err: any) {
@@ -71,7 +72,7 @@ function LoginPageInner() {
 
     setLoading(true);
     try {
-      const res = await apiPost("/auth/verify-otp", { phone, otp });
+      const res = await apiPost("/auth/verify-otp", { phone, otp, role });
 
       // 🆕 New user → go to register choice
       if (res.isNewUser) {
@@ -93,7 +94,11 @@ function LoginPageInner() {
         safeSetItem("user", JSON.stringify(res.user));
         login(res);
 
-        router.push("/auth/register");
+        if (role === "business") {
+          router.push("/auth/register/business");
+        } else {
+          router.push("/auth/register/user");
+        }
 
         return;
       }
@@ -162,6 +167,30 @@ function LoginPageInner() {
         {/* PHONE STEP */}
         {step === "PHONE" && (
           <>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setRole("user")}
+                className={`flex-1 py-2 rounded-lg text-sm border ${
+                  role === "user"
+                    ? "bg-indigo-600 text-white border-indigo-600"
+                    : "bg-white text-gray-700 border-gray-300"
+                }`}
+              >
+                User
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole("business")}
+                className={`flex-1 py-2 rounded-lg text-sm border ${
+                  role === "business"
+                    ? "bg-indigo-600 text-white border-indigo-600"
+                    : "bg-white text-gray-700 border-gray-300"
+                }`}
+              >
+                Business
+              </button>
+            </div>
             <input
               placeholder="Mobile number (10 digits)"
               className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
