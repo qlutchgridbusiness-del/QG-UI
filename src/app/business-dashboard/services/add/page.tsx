@@ -5,6 +5,7 @@ import { Input, Select, Button, Switch, Spin } from "antd";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { API_BASE } from "@/app/lib/api";
+import ImageGallery from "@/app/business-dashboard/components/ImageGallery";
 
 const { Option } = Select;
 
@@ -25,6 +26,7 @@ export default function AddServicePage() {
     maxPrice: undefined as number | undefined,
     durationMinutes: 30,
     available: true,
+    images: [] as string[],
   });
 
   /* ---------------------------
@@ -81,6 +83,7 @@ export default function AddServicePage() {
                 form.pricingType === "RANGE" ? form.maxPrice : undefined,
               durationMinutes: form.durationMinutes,
               available: form.available,
+              images: form.images,
             },
           ],
         },
@@ -189,6 +192,42 @@ export default function AddServicePage() {
           onChange={(v) => setForm({ ...form, available: v })}
         />
         <span>Available for booking</span>
+      </div>
+
+      <div className="space-y-2">
+        <div className="text-sm font-medium">Service Images</div>
+        {form.images.length > 0 && <ImageGallery images={form.images} />}
+        <label className="text-xs text-indigo-600 cursor-pointer">
+          Upload image
+          <input
+            type="file"
+            className="hidden"
+            accept="image/*"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              try {
+                const fd = new FormData();
+                fd.append("file", file);
+                const uploadRes = await axios.post(
+                  `${API_BASE}/uploads/image`,
+                  fd,
+                  { headers: { Authorization: `Bearer ${token}` } }
+                );
+                const url = uploadRes.data?.url;
+                if (url) {
+                  setForm((prev) => ({
+                    ...prev,
+                    images: [...prev.images, url],
+                  }));
+                }
+              } catch (err) {
+                console.error(err);
+                alert("Image upload failed");
+              }
+            }}
+          />
+        </label>
       </div>
 
       <div className="flex gap-3">

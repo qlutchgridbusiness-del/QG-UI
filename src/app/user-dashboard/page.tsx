@@ -221,7 +221,8 @@ export default function UserDashboard() {
 
                     <span className="font-bold text-indigo-600">
                       {s.pricingType === "FIXED" && `₹${s.price}`}
-                      {s.pricingType === "RANGE" && "Quotation"}
+                      {s.pricingType === "RANGE" &&
+                        `₹${s.minPrice ?? 0} – ₹${s.maxPrice ?? 0}`}
                       {s.pricingType === "QUOTE" && "Quotation"}
                     </span>
                   </div>

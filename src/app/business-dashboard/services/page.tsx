@@ -5,6 +5,7 @@ import { Button, Modal, Input, Select, Switch, Spin } from "antd";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { API_BASE } from "@/app/lib/api";
+import ImageGallery from "@/app/business-dashboard/components/ImageGallery";
 
 const { Option } = Select;
 
@@ -17,6 +18,7 @@ type Service = {
   maxPrice?: number;
   durationMinutes?: number;
   available: boolean;
+  images?: string[];
 };
 
 export default function BusinessServicesPage() {
@@ -79,7 +81,7 @@ export default function BusinessServicesPage() {
 
     try {
       await axios.put(
-        `${API_BASE}/services/${editing.id}`,
+        `${API_BASE}/business/services/${editing.id}`,
         editing,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -89,6 +91,28 @@ export default function BusinessServicesPage() {
       console.error(err);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function uploadServiceImage(service: Service, file: File) {
+    if (!token || !file) return;
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const uploadRes = await axios.post(`${API_BASE}/uploads/image`, fd, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const url = uploadRes.data?.url;
+      if (!url) return;
+      const images = [...(service.images || []), url];
+      await axios.put(
+        `${API_BASE}/business/services/${service.id}`,
+        { images },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      loadServices();
+    } catch (err) {
+      console.error(err);
     }
   }
 
@@ -139,6 +163,23 @@ export default function BusinessServicesPage() {
                 {s.pricingType === "QUOTE" && "Quotation"}
                 {s.durationMinutes && ` • ${s.durationMinutes} mins`}
               </p>
+              {s.images && s.images.length > 0 && (
+                <div className="mt-2">
+                  <ImageGallery images={s.images} />
+                </div>
+              )}
+              <label className="mt-2 inline-block text-xs text-indigo-600 cursor-pointer">
+                Upload image
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) uploadServiceImage(s, file);
+                  }}
+                />
+              </label>
             </div>
 
             <div className="flex items-center gap-4">
@@ -146,7 +187,7 @@ export default function BusinessServicesPage() {
                 checked={s.available}
                 onChange={async (checked) => {
                   await axios.put(
-                    `${API_BASE}/services/${s.id}`,
+                    `${API_BASE}/business/services/${s.id}`,
                     { available: checked },
                     {
                       headers: { Authorization: `Bearer ${token}` },

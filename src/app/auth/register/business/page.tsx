@@ -63,11 +63,14 @@ export default function BusinessRegisterPage() {
   const [savedBusinessId, setSavedBusinessId] = useState<string | null>(null);
   const [pendingMode, setPendingMode] = useState(false);
   const [addressQuery, setAddressQuery] = useState("");
-  const [addressResults, setAddressResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement | null>(null);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
+  const addressInputRef = useRef<HTMLInputElement | null>(null);
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
+  const geocoderRef = useRef<any>(null);
 
   const emptyPayload: BusinessPayload = {
     name: "",
@@ -266,8 +269,7 @@ export default function BusinessRegisterPage() {
 
   useEffect(() => {
     const token = safeGetItem("token");
-    const tempToken = safeGetItem("tempToken");
-    if (!token && !tempToken) {
+    if (!token) {
       // save intent
       localStorage.setItem("redirectAfterLogin", "/auth/register/business");
       window.location.href = "/auth/login";
@@ -286,35 +288,104 @@ export default function BusinessRegisterPage() {
   }, [pendingMode, savedBusinessId]);
 
   useEffect(() => {
-    if (addressQuery.length < 3) {
-      setAddressResults([]);
-      return;
-    }
+    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY;
+    if (!key || typeof window === "undefined") return;
 
-    const controller = new AbortController();
-
-    const fetchSuggestions = async () => {
-      setIsSearching(true);
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-            addressQuery,
-          )}&format=json&addressdetails=1&limit=5`,
-        );
-        const data = await res.json();
-        setAddressResults(data);
-      } catch (err) {
-        if (!(err instanceof DOMException)) {
-          console.error(err);
+    const ensureScript = () =>
+      new Promise<void>((resolve, reject) => {
+        if ((window as any).google?.maps?.places) return resolve();
+        const existing = document.getElementById("google-maps-sdk");
+        if (existing) {
+          existing.addEventListener("load", () => resolve());
+          return;
         }
-      } finally {
-        setIsSearching(false);
-      }
-    };
+        const script = document.createElement("script");
+        script.id = "google-maps-sdk";
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = () => reject();
+        document.body.appendChild(script);
+      });
 
-    fetchSuggestions();
-    return () => controller.abort();
-  }, [addressQuery]);
+    ensureScript()
+      .then(() => {
+        if (!addressInputRef.current) return;
+        const google = (window as any).google;
+        const autocomplete = new google.maps.places.Autocomplete(
+          addressInputRef.current,
+          {
+            fields: ["formatted_address", "geometry", "name"],
+            types: ["geocode"],
+          },
+        );
+
+        geocoderRef.current = new google.maps.Geocoder();
+
+        autocomplete.addListener("place_changed", () => {
+          const place = autocomplete.getPlace();
+          if (!place?.geometry?.location) return;
+          const lat = place.geometry.location.lat();
+          const lng = place.geometry.location.lng();
+          const formatted =
+            place.formatted_address || place.name || addressQuery;
+
+          updatePayload({
+            address: formatted,
+            latitude: String(lat),
+            longitude: String(lng),
+          });
+          setAddressQuery(formatted);
+          setLocationError(null);
+
+          if (mapRef.current) {
+            if (!mapInstanceRef.current) {
+              mapInstanceRef.current = new google.maps.Map(mapRef.current, {
+                center: { lat, lng },
+                zoom: 15,
+              });
+            } else {
+              mapInstanceRef.current.setCenter({ lat, lng });
+            }
+            if (!markerRef.current) {
+              markerRef.current = new google.maps.Marker({
+                position: { lat, lng },
+                map: mapInstanceRef.current,
+                draggable: true,
+              });
+              markerRef.current.addListener("dragend", () => {
+                const pos = markerRef.current.getPosition();
+                if (!pos) return;
+                const nLat = pos.lat();
+                const nLng = pos.lng();
+                updatePayload({
+                  latitude: String(nLat),
+                  longitude: String(nLng),
+                });
+                if (geocoderRef.current) {
+                  geocoderRef.current.geocode(
+                    { location: { lat: nLat, lng: nLng } },
+                    (results: any) => {
+                      if (results?.[0]?.formatted_address) {
+                        updatePayload({
+                          address: results[0].formatted_address,
+                        });
+                        setAddressQuery(results[0].formatted_address);
+                      }
+                    },
+                  );
+                }
+              });
+            } else {
+              markerRef.current.setPosition({ lat, lng });
+            }
+          }
+        });
+      })
+      .catch(() => {
+        setLocationError("Failed to load Google Maps. Check API key.");
+      });
+  }, []);
 
   useEffect(() => {
     setHydrated(true);
@@ -893,69 +964,7 @@ export default function BusinessRegisterPage() {
     return "XXXX XXXX " + digits.slice(-4);
   }
 
-  function handleSelectAddress(result: any) {
-    updatePayload({
-      address: result.display_name,
-      latitude: result.lat,
-      longitude: result.lon,
-    });
-
-    setAddressQuery(result.display_name);
-    setAddressResults([]);
-    setLocationError(null);
-  }
-
-  async function handleUseCurrentLocation() {
-    if (!navigator.geolocation) {
-      alert("Location not supported");
-      return;
-    }
-
-    setLocationError(null);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
-          );
-          const data = await res.json();
-
-          updatePayload({
-            address: data.display_name || "Current location",
-            latitude: String(lat),
-            longitude: String(lon),
-          });
-
-          setAddressQuery(data.display_name || "");
-          setAddressResults([]);
-          setLocationError(null);
-        } catch {
-          updatePayload({
-            address: "Current location",
-            latitude: String(lat),
-            longitude: String(lon),
-          });
-          setLocationError(null);
-        }
-      },
-      (err) => {
-        let message = "Unable to fetch location. Please try again.";
-        if (err?.code === 1) {
-          message =
-            "Location permission denied. Enable Location Services for Safari and try again.";
-        } else if (err?.code === 2) {
-          message = "Location unavailable. Move to an open area and try again.";
-        } else if (err?.code === 3) {
-          message = "Location request timed out. Please try again.";
-        }
-        setLocationError(message);
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
-    );
-  }
+  // Google Maps autocomplete handles address selection
 
   async function handleFileUpload(file: File, field: "logoKey" | "coverKey") {
     if (!file) return;
@@ -1263,6 +1272,7 @@ export default function BusinessRegisterPage() {
                       {/* Address always full width */}
                       <div className="relative">
                         <input
+                          ref={addressInputRef}
                           value={addressQuery}
                           onChange={(e) => {
                             const value = e.target.value;
@@ -1276,29 +1286,12 @@ export default function BusinessRegisterPage() {
                           placeholder="Search area, street, landmark…"
                           className="w-full p-3 pl-10 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                         />
-
-                        {addressResults.length > 0 && (
-                          <ul className="absolute z-20 bg-white border border-gray-300 dark:border-slate-700 rounded-lg mt-1 w-full shadow max-h-60 overflow-auto">
-                            {addressResults.map((r, i) => (
-                              <li
-                                key={i}
-                                onClick={() => handleSelectAddress(r)}
-                                className="px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                              >
-                                {r.display_name}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={handleUseCurrentLocation}
-                        className="mt-2 text-sm text-indigo-600 hover:underline flex items-center gap-2"
-                      >
-                        📍 Use my current location
-                      </button>
+                      <div
+                        ref={mapRef}
+                        className="mt-3 h-56 w-full rounded-lg border border-gray-200 dark:border-slate-800"
+                      />
                       {locationError && (
                         <div className="mt-2 text-xs text-red-600">
                           {locationError}
