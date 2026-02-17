@@ -7,7 +7,7 @@ export default function ContactUsPage() {
       <h1 className="text-3xl text-white font-bold">Contact Us</h1>
 
       <h1 className="text-white">
-        Reach out to us for any queries or assistance. We are here to help you with a smile!
+        Reach out to us for any queries or assistance! We are here to help you with a smile!
       </h1>
 
       <div className="bg-gray-50 rounded-xl p-6 space-y-4">
