@@ -41,7 +41,10 @@ export default function BusinessServicesPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const business = businessRes.data?.[0];
+      const business =
+        businessRes.data?.businesses?.[0] ??
+        businessRes.data?.[0] ??
+        businessRes.data;
       if (!business) {
         setServices([]);
         return;
@@ -49,9 +52,8 @@ export default function BusinessServicesPage() {
 
       // 2️⃣ Get services for business
       const servicesRes = await axios.get(
-        `${API_BASE}/services`,
+        `${API_BASE}/business/${business.id}/services`,
         {
-          params: { businessId: business.id },
           headers: { Authorization: `Bearer ${token}` },
         }
       );

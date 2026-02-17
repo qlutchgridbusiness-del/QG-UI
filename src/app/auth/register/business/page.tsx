@@ -7,7 +7,7 @@ import {
   safeSetItem,
 } from "@/app/lib/safeStorage";
 import { UploadCard } from "@/app/business-dashboard/components/UploadCard";
-// import BusinessPlanSelection from "./plans/page";
+import BusinessPlanSelection from "./plans/page";
 
 type ServiceRow = {
   id: string;
@@ -177,7 +177,7 @@ export default function BusinessRegisterPage() {
   const [termsSubmitting, setTermsSubmitting] = useState(false);
   const [termsError, setTermsError] = useState<string | null>(null);
   const [termsSubmitted, setTermsSubmitted] = useState(false);
-  // const [planActivated, setPlanActivated] = useState(false);
+  const [planActivated, setPlanActivated] = useState(false);
   const [stepError, setStepError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -387,7 +387,7 @@ export default function BusinessRegisterPage() {
   }, [step, savedBusinessId]);
 
   useEffect(() => {
-    if (step === 5 && savedBusinessId) {
+    if (step === 6 && savedBusinessId) {
       fetchKycStatus(savedBusinessId);
       loadTermsStatus(savedBusinessId);
       if (!signatureName.trim() && payload?.name?.trim()) {
@@ -829,7 +829,7 @@ export default function BusinessRegisterPage() {
       return;
     }
     setStepError(null);
-    setStep((s) => Math.min(5, s + 1));
+    setStep((s) => Math.min(6, s + 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
   function prev() {
@@ -1050,8 +1050,8 @@ export default function BusinessRegisterPage() {
         authToken,
       );
 
-      // 👇 MOVE TO TERMS
-      setStep(5);
+      // 👇 MOVE TO PLAN SELECTION
+      setStep(6);
     } catch (e) {
       alert("Failed to submit business");
     } finally {
@@ -1154,7 +1154,7 @@ export default function BusinessRegisterPage() {
 
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
-                  Step {step} / 5
+                  Step {step} / 6
                 </h3>
                 <div className="text-sm text-gray-500 dark:text-slate-400">
                   {submitting ? "Saving..." : "Draft saved locally"}
@@ -1163,7 +1163,7 @@ export default function BusinessRegisterPage() {
 
               <div
                 className={
-                  pendingMode && step !== 5
+                  pendingMode && step !== 6
                     ? "pointer-events-none opacity-60"
                     : ""
                 }
@@ -2122,10 +2122,10 @@ export default function BusinessRegisterPage() {
 
                 </section>
               )}
-              {step === 5 && savedBusinessId && (
+              {step === 6 && savedBusinessId && (
                 <section className="space-y-6">
                   <h4 className="text-xl font-bold text-gray-900 dark:text-slate-100">
-                    Terms & Conditions
+                    Terms & Plan Selection
                   </h4>
 
                   <div className="border border-gray-200 dark:border-slate-800 rounded-xl p-5 bg-white dark:bg-slate-900 space-y-3">
@@ -2288,40 +2288,53 @@ export default function BusinessRegisterPage() {
                   </div>
 
                   {termsSubmitted && !pendingMode && (
-                    <div className="mt-4 flex flex-col sm:flex-row gap-3">
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          if (!savedBusinessId) return;
-                          try {
-                            const authToken = getAuthToken();
-                            if (!authToken) return;
-                            await apiPost(
-                              `/business/${savedBusinessId}/submit`,
-                              {},
-                              authToken,
-                            );
-                            setPendingMode(true);
-                          } catch (e: any) {
-                            setTermsError(
-                              e?.message || "Failed to submit application",
-                            );
-                          }
+                    <div>
+                      <h4 className="text-xl font-bold text-gray-900 dark:text-slate-100">
+                        Choose Your Plan
+                      </h4>
+                      <BusinessPlanSelection
+                        businessId={savedBusinessId}
+                        onActivated={() => {
+                          setPlanActivated(true);
                         }}
-                        className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg font-semibold"
-                      >
-                        Submit Application
-                      </button>
-                      <div className="text-xs text-gray-500 dark:text-slate-400">
-                        Submit after signing the terms to send your application
-                        for review.
-                      </div>
+                      />
+                      {planActivated && (
+                        <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (!savedBusinessId) return;
+                              try {
+                                const authToken = getAuthToken();
+                                if (!authToken) return;
+                                await apiPost(
+                                  `/business/${savedBusinessId}/submit`,
+                                  {},
+                                  authToken,
+                                );
+                                setPendingMode(true);
+                              } catch (e: any) {
+                                setTermsError(
+                                  e?.message || "Failed to submit application",
+                                );
+                              }
+                            }}
+                            className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg font-semibold"
+                          >
+                            Submit Application
+                          </button>
+                          <div className="text-xs text-gray-500 dark:text-slate-400">
+                            Submit after selecting a plan to send your
+                            application for review.
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                   {pendingMode && (
                     <div className="text-sm text-gray-600 dark:text-slate-400">
-                      Your profile is under review. You can update your digital
-                      signature above if needed.
+                      Your plan is locked while the profile is under review. You
+                      can update your digital signature above if needed.
                     </div>
                   )}
                 </section>
@@ -2385,8 +2398,8 @@ export default function BusinessRegisterPage() {
                       {step === 5 && (
                         <>
                           <p className="text-xs text-gray-500 dark:text-slate-400 text-center mt-2">
-                            Your application is submitted only after signing the
-                            terms.
+                            Your application is submitted only after terms and
+                            plan completion.
                           </p>
 
                           <button

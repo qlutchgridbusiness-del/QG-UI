@@ -27,7 +27,6 @@ export default function Navbar() {
     role,
     businesses,
     activeBusinessId,
-    switchToUser,
     switchToBusiness,
     logout,
     isAuthenticated,
@@ -160,17 +159,6 @@ export default function Navbar() {
                       router.push("/user-dashboard/orders");
                     }}
                   />
-
-                    {role === "BUSINESS" && (
-                      <ActionItem
-                        label="Switch to User Mode"
-                        onClick={() => {
-                          setOpen(false);
-                          switchToUser();
-                          router.push("/user-dashboard");
-                        }}
-                      />
-                    )}
 
                     {/* BUSINESS SECTION */}
                     {businesses?.length > 0 && (
