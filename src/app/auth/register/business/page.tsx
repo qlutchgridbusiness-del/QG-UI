@@ -289,7 +289,14 @@ export default function BusinessRegisterPage() {
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY;
-    if (!key || typeof window === "undefined") return;
+    if (!key || typeof window === "undefined") {
+      if (!key) {
+        setLocationError(
+          "Google Maps key missing. Set NEXT_PUBLIC_GOOGLE_MAPS_KEY and rebuild."
+        );
+      }
+      return;
+    }
 
     const ensureScript = () =>
       new Promise<void>((resolve, reject) => {
@@ -312,6 +319,12 @@ export default function BusinessRegisterPage() {
       .then(() => {
         if (!addressInputRef.current) return;
         const google = (window as any).google;
+        if (mapRef.current && !mapInstanceRef.current) {
+          mapInstanceRef.current = new google.maps.Map(mapRef.current, {
+            center: { lat: 12.9716, lng: 77.5946 },
+            zoom: 12,
+          });
+        }
         const autocomplete = new google.maps.places.Autocomplete(
           addressInputRef.current,
           {
@@ -964,7 +977,70 @@ export default function BusinessRegisterPage() {
     return "XXXX XXXX " + digits.slice(-4);
   }
 
-  // Google Maps autocomplete handles address selection
+  function handleUseCurrentLocation() {
+    if (!navigator.geolocation) {
+      setLocationError("Location not supported on this device.");
+      return;
+    }
+    setLocationError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        updatePayload({
+          latitude: String(lat),
+          longitude: String(lng),
+        });
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.setCenter({ lat, lng });
+          mapInstanceRef.current.setZoom(15);
+        }
+        if (!markerRef.current && mapInstanceRef.current) {
+          markerRef.current = new (window as any).google.maps.Marker({
+            position: { lat, lng },
+            map: mapInstanceRef.current,
+            draggable: true,
+          });
+          markerRef.current.addListener("dragend", () => {
+            const p = markerRef.current.getPosition();
+            if (!p) return;
+            const nLat = p.lat();
+            const nLng = p.lng();
+            updatePayload({
+              latitude: String(nLat),
+              longitude: String(nLng),
+            });
+            if (geocoderRef.current) {
+              geocoderRef.current.geocode(
+                { location: { lat: nLat, lng: nLng } },
+                (results: any) => {
+                  if (results?.[0]?.formatted_address) {
+                    updatePayload({ address: results[0].formatted_address });
+                    setAddressQuery(results[0].formatted_address);
+                  }
+                },
+              );
+            }
+          });
+        } else if (markerRef.current) {
+          markerRef.current.setPosition({ lat, lng });
+        }
+        if (geocoderRef.current) {
+          geocoderRef.current.geocode(
+            { location: { lat, lng } },
+            (results: any) => {
+              if (results?.[0]?.formatted_address) {
+                updatePayload({ address: results[0].formatted_address });
+                setAddressQuery(results[0].formatted_address);
+              }
+            },
+          );
+        }
+      },
+      () => setLocationError("Unable to fetch location. Please try again."),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+    );
+  }
 
   async function handleFileUpload(file: File, field: "logoKey" | "coverKey") {
     if (!file) return;
@@ -1193,6 +1269,46 @@ export default function BusinessRegisterPage() {
                       </button>
                     </div>
 
+                    {/* Address + Map */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium mb-1 block">
+                        Business address
+                      </label>
+                      <div className="relative">
+                        <input
+                          ref={addressInputRef}
+                          value={addressQuery}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setAddressQuery(value);
+                            updatePayload({
+                              address: value,
+                              latitude: "",
+                              longitude: "",
+                            });
+                          }}
+                          placeholder="Search area, street, landmark…"
+                          className="w-full p-3 pl-10 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleUseCurrentLocation}
+                        className="text-sm text-indigo-600 hover:underline flex items-center gap-2"
+                      >
+                        📍 Use current location
+                      </button>
+                      <div
+                        ref={mapRef}
+                        className="mt-2 h-56 w-full rounded-lg border border-gray-200 dark:border-slate-800"
+                      />
+                      {locationError && (
+                        <div className="mt-2 text-xs text-red-600">
+                          {locationError}
+                        </div>
+                      )}
+                    </div>
+
                     {/* Mobile: 1 col | Desktop: 2 col */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <input
@@ -1269,34 +1385,6 @@ export default function BusinessRegisterPage() {
                         </p>
                       </div>
 
-                      {/* Address always full width */}
-                      <div className="relative">
-                        <input
-                          ref={addressInputRef}
-                          value={addressQuery}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setAddressQuery(value);
-                            updatePayload({
-                              address: value,
-                              latitude: "",
-                              longitude: "",
-                            });
-                          }}
-                          placeholder="Search area, street, landmark…"
-                          className="w-full p-3 pl-10 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
-                        />
-                      </div>
-
-                      <div
-                        ref={mapRef}
-                        className="mt-3 h-56 w-full rounded-lg border border-gray-200 dark:border-slate-800"
-                      />
-                      {locationError && (
-                        <div className="mt-2 text-xs text-red-600">
-                          {locationError}
-                        </div>
-                      )}
                     </div>
                   </section>
                 )}
