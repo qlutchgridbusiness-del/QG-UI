@@ -58,6 +58,17 @@ export default function BusinessBookingsPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [serviceAmount, setServiceAmount] = useState("");
 
+  useEffect(() => {
+    if (!imageModal.open) {
+      setFiles([]);
+      setServiceAmount("");
+      return;
+    }
+    // reset on every new modal open to avoid leaking files across bookings/types
+    setFiles([]);
+    setServiceAmount("");
+  }, [imageModal.open, imageModal.booking?.id, imageModal.type]);
+
   function detectStatusChange(prev: Booking[], next: Booking[]) {
     for (const b of next) {
       const old = prev.find((p) => p.id === b.id);
@@ -339,12 +350,16 @@ export default function BusinessBookingsPage() {
             : "Upload After Service Images"
         }
         open={imageModal.open}
-        onCancel={() =>
-          setImageModal({ open: false, booking: null, type: null })
-        }
+        onCancel={() => {
+          setImageModal({ open: false, booking: null, type: null });
+          setFiles([]);
+          setServiceAmount("");
+        }}
         footer={null}
+        destroyOnClose
       >
         <Upload
+          key={`${imageModal.booking?.id ?? "none"}-${imageModal.type ?? "none"}`}
           beforeUpload={(file) => {
             setFiles((prev) => [...prev, file]);
             return false;

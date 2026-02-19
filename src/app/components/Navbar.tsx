@@ -17,6 +17,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { resolvedTheme, toggleTheme } = useTheme();
   const [hasTempAuth, setHasTempAuth] = useState(false);
+  const [tempRole, setTempRole] = useState<"user" | "business" | null>(null);
   const [userBadge, setUserBadge] = useState(0);
   const [businessBadge, setBusinessBadge] = useState(0);
   const prevUserRef = useRef<Record<string, string>>({});
@@ -38,6 +39,12 @@ export default function Navbar() {
   useEffect(() => {
     const temp = safeGetItem("verifiedPhone");
     setHasTempAuth(Boolean(temp));
+    const storedRole = safeGetItem("verifiedRole");
+    if (storedRole === "user" || storedRole === "business") {
+      setTempRole(storedRole);
+    } else {
+      setTempRole(null);
+    }
   }, [isAuthenticated, pathname]);
 
   useEffect(() => {
@@ -100,7 +107,13 @@ export default function Navbar() {
               <div className="w-32 h-10 rounded-full bg-gray-200/70 dark:bg-slate-800 animate-pulse" />
             ) : hasTempAuth ? (
               <button
-                onClick={() => router.push("/auth/register")}
+                onClick={() =>
+                  router.push(
+                    tempRole === "business"
+                      ? "/auth/register/business"
+                      : "/auth/register/user"
+                  )
+                }
                 className="px-5 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-sky-500 text-white font-semibold"
               >
                 Continue Registration
@@ -136,53 +149,68 @@ export default function Navbar() {
                     transition={{ duration: 0.15 }}
                     className="absolute right-0 mt-3 w-64 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 p-2"
                   >
-                  <NavItem
-                    label="Dashboard"
-                    onClick={() => {
-                      setOpen(false);
-                      router.push("/user-dashboard");
-                    }}
-                  />
+                  {role === "USER" && (
+                    <>
+                      <NavItem
+                        label="Dashboard"
+                        onClick={() => {
+                          setOpen(false);
+                          router.push("/user-dashboard");
+                        }}
+                      />
 
-                  <NavItem
-                    label="Profile"
-                    onClick={() => {
-                      setOpen(false);
-                      router.push("/user-dashboard/profile");
-                    }}
-                  />
+                      <NavItem
+                        label="Profile"
+                        onClick={() => {
+                          setOpen(false);
+                          router.push("/user-dashboard/profile");
+                        }}
+                      />
 
-                  <NavItem
-                    label={`Orders${userBadge > 0 ? ` (${userBadge})` : ""}`}
-                    onClick={() => {
-                      setOpen(false);
-                      router.push("/user-dashboard/orders");
-                    }}
-                  />
+                      <NavItem
+                        label={`Orders${userBadge > 0 ? ` (${userBadge})` : ""}`}
+                        onClick={() => {
+                          setOpen(false);
+                          router.push("/user-dashboard/orders");
+                        }}
+                      />
+                    </>
+                  )}
 
-                    {/* BUSINESS SECTION */}
-                    {businesses?.length > 0 && (
-                      <>
-                        <Divider />
-
-                        <div className="px-4 py-2 text-xs text-gray-400 uppercase">
-                          Businesses
-                        </div>
-
-                        {businesses.map((b) => (
-                          <NavItem
-                            key={b.id}
-                            label={b.name}
-                            active={b.id === activeBusinessId}
-                            onClick={() => {
-                              setOpen(false);
-                              switchToBusiness(b.id);
-                              router.push("/business-dashboard");
-                            }}
-                          />
-                        ))}
-                      </>
-                    )}
+                  {role === "BUSINESS" && (
+                    <>
+                      <NavItem
+                        label="Dashboard"
+                        onClick={() => {
+                          setOpen(false);
+                          router.push("/business-dashboard");
+                        }}
+                      />
+                      <NavItem
+                        label="Services"
+                        onClick={() => {
+                          setOpen(false);
+                          router.push("/business-dashboard/services");
+                        }}
+                      />
+                      <NavItem
+                        label={`Bookings${
+                          businessBadge > 0 ? ` (${businessBadge})` : ""
+                        }`}
+                        onClick={() => {
+                          setOpen(false);
+                          router.push("/business-dashboard/bookings");
+                        }}
+                      />
+                      <NavItem
+                        label="Settings"
+                        onClick={() => {
+                          setOpen(false);
+                          router.push("/business-dashboard/settings");
+                        }}
+                      />
+                    </>
+                  )}
 
                     <Divider />
 

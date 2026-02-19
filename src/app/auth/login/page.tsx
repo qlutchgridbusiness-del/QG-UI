@@ -91,6 +91,7 @@ function LoginPageInner() {
           safeRemoveItem("user:draftPhone");
         }
         safeSetItem("verifiedPhone", phone);
+        safeSetItem("verifiedRole", role);
         safeSetItem("user", JSON.stringify(res.user));
         login(res);
 
@@ -107,6 +108,7 @@ function LoginPageInner() {
       safeSetItem("token", res.token);
       safeSetItem("user", JSON.stringify(res.user));
       safeRemoveItem("verifiedPhone");
+      safeRemoveItem("verifiedRole");
       login(res);
 
       const redirect = safeGetItem("redirectAfterLogin");

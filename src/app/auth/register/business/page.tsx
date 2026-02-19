@@ -19,6 +19,8 @@ type ServiceRow = {
   isQuotation?: boolean;
   durationMinutes?: number;
   available?: boolean;
+  brands?: string[];
+  carTypes?: string[];
 };
 
 type BusinessPayload = {
@@ -52,6 +54,53 @@ const CATEGORIES = [
   "Accessories",
 ];
 
+const BRANDS = [
+  "Maruti Suzuki",
+  "Hyundai",
+  "Tata Motors",
+  "Mahindra",
+  "Kia",
+  "Toyota",
+  "Honda",
+  "MG Motor",
+  "Renault",
+  "Nissan",
+  "Volkswagen",
+  "Skoda",
+  "BYD",
+  "Mercedes-Benz",
+  "BMW",
+  "Audi",
+  "Volvo",
+  "Jaguar",
+  "Land Rover",
+  "Lexus",
+  "Porsche",
+  "Lamborghini",
+  "Ferrari",
+  "Rolls-Royce",
+  "Bentley",
+  "Mini",
+  "Force Motors",
+  "Isuzu",
+  "others",
+];
+
+const CAR_TYPES = [
+  "Hatchback",
+  "Sedan",
+  "SUV",
+  "Compact SUV",
+  "Pickup Truck",
+  "Van",
+  "Minivan",
+  "Electric Hatchback",
+  "Electric Sedan",
+  "Electric SUV",
+  "Hybrid Vehicle",
+  "CNG Vehicle",
+];
+
 function uid(prefix = "") {
   return prefix + Math.random().toString(36).slice(2, 9);
 }
@@ -64,6 +113,7 @@ export default function BusinessRegisterPage() {
   const [pendingMode, setPendingMode] = useState(false);
   const [addressQuery, setAddressQuery] = useState("");
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [mapsLoaded, setMapsLoaded] = useState(false);
   const logoInputRef = useRef<HTMLInputElement | null>(null);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
   const addressInputRef = useRef<HTMLInputElement | null>(null);
@@ -104,16 +154,18 @@ export default function BusinessRegisterPage() {
   });
 
   const emptyServices: ServiceRow[] = [
-    {
-      id: uid("s_"),
-      name: "",
-      price: null,
-      minPrice: null,
-      maxPrice: null,
-      durationMinutes: 30,
-      available: true,
-    },
-  ];
+      {
+        id: uid("s_"),
+        name: "",
+        price: null,
+        minPrice: null,
+        maxPrice: null,
+        durationMinutes: 30,
+        available: true,
+        brands: [],
+        carTypes: [],
+      },
+    ];
 
   const [services, setServices] = useState<ServiceRow[]>(() => {
     try {
@@ -133,16 +185,18 @@ export default function BusinessRegisterPage() {
   });
 
   const emptyAccessories: ServiceRow[] = [
-    {
-      id: uid("a_"),
-      name: "",
-      price: null,
-      minPrice: null,
-      maxPrice: null,
-      durationMinutes: 30,
-      available: true,
-    },
-  ];
+      {
+        id: uid("a_"),
+        name: "",
+        price: null,
+        minPrice: null,
+        maxPrice: null,
+        durationMinutes: 30,
+        available: true,
+        brands: [],
+        carTypes: [],
+      },
+    ];
 
   const [accessories, setAccessories] = useState<ServiceRow[]>(() => {
     try {
@@ -308,8 +362,9 @@ export default function BusinessRegisterPage() {
         }
         const script = document.createElement("script");
         script.id = "google-maps-sdk";
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&v=weekly&loading=async`;
         script.async = true;
+        script.defer = true;
         script.onload = () => resolve();
         script.onerror = () => reject();
         document.body.appendChild(script);
@@ -319,6 +374,7 @@ export default function BusinessRegisterPage() {
       .then(() => {
         if (!addressInputRef.current) return;
         const google = (window as any).google;
+        setMapsLoaded(Boolean(google?.maps?.places));
         if (mapRef.current && !mapInstanceRef.current) {
           mapInstanceRef.current = new google.maps.Map(mapRef.current, {
             center: { lat: 12.9716, lng: 77.5946 },
@@ -396,6 +452,7 @@ export default function BusinessRegisterPage() {
         });
       })
       .catch(() => {
+        setMapsLoaded(false);
         setLocationError("Failed to load Google Maps. Check API key.");
       });
   }, []);
@@ -933,6 +990,8 @@ export default function BusinessRegisterPage() {
         maxPrice: null,
         durationMinutes: 30,
         available: true,
+        brands: [],
+        carTypes: [],
       },
     ]);
   }
@@ -947,6 +1006,8 @@ export default function BusinessRegisterPage() {
         maxPrice: null,
         durationMinutes: 30,
         available: true,
+        brands: [],
+        carTypes: [],
       },
     ]);
   }
@@ -965,6 +1026,16 @@ export default function BusinessRegisterPage() {
   }
   function removeAccessory(id: string) {
     setAccessories((list) => list.filter((r) => r.id !== id));
+  }
+
+  function toggleMulti(
+    list: string[] | undefined,
+    value: string,
+  ): string[] {
+    const current = list ?? [];
+    return current.includes(value)
+      ? current.filter((v) => v !== value)
+      : [...current, value];
   }
   function maskPan(pan: string) {
     if (pan.length < 5) return pan;
@@ -995,45 +1066,52 @@ export default function BusinessRegisterPage() {
           mapInstanceRef.current.setCenter({ lat, lng });
           mapInstanceRef.current.setZoom(15);
         }
-        if (!markerRef.current && mapInstanceRef.current) {
-          markerRef.current = new (window as any).google.maps.Marker({
-            position: { lat, lng },
-            map: mapInstanceRef.current,
-            draggable: true,
-          });
-          markerRef.current.addListener("dragend", () => {
-            const p = markerRef.current.getPosition();
-            if (!p) return;
-            const nLat = p.lat();
-            const nLng = p.lng();
-            updatePayload({
-              latitude: String(nLat),
-              longitude: String(nLng),
+        const google = (window as any).google;
+        if (google?.maps && mapInstanceRef.current) {
+          if (!markerRef.current) {
+            markerRef.current = new google.maps.Marker({
+              position: { lat, lng },
+              map: mapInstanceRef.current,
+              draggable: true,
             });
-            if (geocoderRef.current) {
-              geocoderRef.current.geocode(
-                { location: { lat: nLat, lng: nLng } },
-                (results: any) => {
-                  if (results?.[0]?.formatted_address) {
-                    updatePayload({ address: results[0].formatted_address });
-                    setAddressQuery(results[0].formatted_address);
-                  }
-                },
-              );
-            }
-          });
-        } else if (markerRef.current) {
-          markerRef.current.setPosition({ lat, lng });
-        }
-        if (geocoderRef.current) {
-          geocoderRef.current.geocode(
-            { location: { lat, lng } },
-            (results: any) => {
-              if (results?.[0]?.formatted_address) {
-                updatePayload({ address: results[0].formatted_address });
-                setAddressQuery(results[0].formatted_address);
+            markerRef.current.addListener("dragend", () => {
+              const p = markerRef.current.getPosition();
+              if (!p) return;
+              const nLat = p.lat();
+              const nLng = p.lng();
+              updatePayload({
+                latitude: String(nLat),
+                longitude: String(nLng),
+              });
+              if (geocoderRef.current) {
+                geocoderRef.current.geocode(
+                  { location: { lat: nLat, lng: nLng } },
+                  (results: any) => {
+                    if (results?.[0]?.formatted_address) {
+                      updatePayload({ address: results[0].formatted_address });
+                      setAddressQuery(results[0].formatted_address);
+                    }
+                  },
+                );
               }
-            },
+            });
+          } else {
+            markerRef.current.setPosition({ lat, lng });
+          }
+          if (geocoderRef.current) {
+            geocoderRef.current.geocode(
+              { location: { lat, lng } },
+              (results: any) => {
+                if (results?.[0]?.formatted_address) {
+                  updatePayload({ address: results[0].formatted_address });
+                  setAddressQuery(results[0].formatted_address);
+                }
+              },
+            );
+          }
+        } else if (!mapsLoaded) {
+          setLocationError(
+            "Map is not loaded yet. Please enter address manually."
           );
         }
       },
@@ -1118,6 +1196,8 @@ export default function BusinessRegisterPage() {
               maxPrice: s.maxPrice,
               durationMinutes: s.durationMinutes,
               available: s.available,
+              brands: s.brands,
+              carTypes: s.carTypes,
               offeringType: "SERVICE",
             })),
             ...accessories.map((s) => ({
@@ -1128,6 +1208,8 @@ export default function BusinessRegisterPage() {
               maxPrice: s.maxPrice,
               durationMinutes: s.durationMinutes,
               available: s.available,
+              brands: s.brands,
+              carTypes: s.carTypes,
               offeringType: "ACCESSORY",
             })),
           ],
@@ -1298,10 +1380,15 @@ export default function BusinessRegisterPage() {
                       >
                         📍 Use current location
                       </button>
-                      <div
-                        ref={mapRef}
-                        className="mt-2 h-56 w-full rounded-lg border border-gray-200 dark:border-slate-800"
-                      />
+                      <div className="mt-2 h-56 w-full rounded-lg border border-gray-200 dark:border-slate-800 relative overflow-hidden">
+                        <div ref={mapRef} className="absolute inset-0" />
+                        {!mapsLoaded && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-gray-50/80 dark:bg-slate-900/70 text-xs text-gray-600 dark:text-slate-300">
+                            Map not loaded yet. Enter address manually or check
+                            API key.
+                          </div>
+                        )}
+                      </div>
                       {locationError && (
                         <div className="mt-2 text-xs text-red-600">
                           {locationError}
@@ -1982,55 +2069,42 @@ export default function BusinessRegisterPage() {
 
                         {/* PRICE RANGE */}
                         {s.pricingType === "RANGE" && (
-                          <div className="space-y-4">
-                            <div className="text-sm text-gray-700 dark:text-slate-300">
-                              Price range:
-                              <span className="font-semibold ml-1">
-                                ₹{s.minPrice ?? 100} – ₹{s.maxPrice ?? 3000}
-                              </span>
-                            </div>
-
+                          <div className="grid grid-cols-2 gap-3">
                             <div>
                               <label className="text-xs text-gray-500 dark:text-slate-400">
-                                Minimum price
+                                Min price
                               </label>
                               <input
-                                type="range"
-                                min={100}
-                                max={10000}
-                                step={100}
-                                value={s.minPrice ?? 100}
+                                type="number"
+                                value={s.minPrice ?? ""}
                                 onChange={(e) =>
                                   updateService(s.id, {
-                                    minPrice: Number(e.target.value),
+                                    minPrice: e.target.value
+                                      ? Number(e.target.value)
+                                      : null,
                                   })
                                 }
-                                className="w-full accent-indigo-600"
+                                placeholder="Min price"
+                                className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                               />
                             </div>
-
                             <div>
                               <label className="text-xs text-gray-500 dark:text-slate-400">
-                                Maximum price
+                                Max price
                               </label>
                               <input
-                                type="range"
-                                min={100}
-                                max={10000}
-                                step={100}
-                                value={s.maxPrice ?? 3000}
+                                type="number"
+                                value={s.maxPrice ?? ""}
                                 onChange={(e) =>
                                   updateService(s.id, {
-                                    maxPrice: Number(e.target.value),
+                                    maxPrice: e.target.value
+                                      ? Number(e.target.value)
+                                      : null,
                                   })
                                 }
-                                className="w-full accent-indigo-600"
+                                placeholder="Max price"
+                                className="w-full p-3 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                               />
-                            </div>
-
-                            <div className="flex justify-between text-xs text-gray-400">
-                              <span>₹100</span>
-                              <span>₹10,000</span>
                             </div>
                           </div>
                         )}
@@ -2076,6 +2150,64 @@ export default function BusinessRegisterPage() {
                             />
                             Available for booking
                           </label>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
+                            Brands supported
+                          </label>
+                          <div className="flex flex-wrap gap-2 max-h-32 overflow-auto border border-gray-200 dark:border-slate-800 rounded-lg p-2 bg-white dark:bg-slate-900">
+                            {BRANDS.map((b) => {
+                              const selected = (s.brands || []).includes(b);
+                              return (
+                                <button
+                                  key={b}
+                                  type="button"
+                                  onClick={() =>
+                                    updateService(s.id, {
+                                      brands: toggleMulti(s.brands, b),
+                                    })
+                                  }
+                                  className={`px-2 py-1 text-xs rounded-full border ${
+                                    selected
+                                      ? "bg-indigo-600 text-white border-indigo-600"
+                                      : "bg-white text-gray-700 border-gray-300"
+                                  }`}
+                                >
+                                  {b}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
+                            Car types supported
+                          </label>
+                          <div className="flex flex-wrap gap-2 max-h-32 overflow-auto border border-gray-200 dark:border-slate-800 rounded-lg p-2 bg-white dark:bg-slate-900">
+                            {CAR_TYPES.map((t) => {
+                              const selected = (s.carTypes || []).includes(t);
+                              return (
+                                <button
+                                  key={t}
+                                  type="button"
+                                  onClick={() =>
+                                    updateService(s.id, {
+                                      carTypes: toggleMulti(s.carTypes, t),
+                                    })
+                                  }
+                                  className={`px-2 py-1 text-xs rounded-full border ${
+                                    selected
+                                      ? "bg-indigo-600 text-white border-indigo-600"
+                                      : "bg-white text-gray-700 border-gray-300"
+                                  }`}
+                                >
+                                  {t}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -2197,6 +2329,64 @@ export default function BusinessRegisterPage() {
                             />
                           </div>
                         )}
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
+                            Brands supported
+                          </label>
+                          <div className="flex flex-wrap gap-2 max-h-32 overflow-auto border border-gray-200 dark:border-slate-800 rounded-lg p-2 bg-white dark:bg-slate-900">
+                            {BRANDS.map((b) => {
+                              const selected = (s.brands || []).includes(b);
+                              return (
+                                <button
+                                  key={b}
+                                  type="button"
+                                  onClick={() =>
+                                    updateAccessory(s.id, {
+                                      brands: toggleMulti(s.brands, b),
+                                    })
+                                  }
+                                  className={`px-2 py-1 text-xs rounded-full border ${
+                                    selected
+                                      ? "bg-indigo-600 text-white border-indigo-600"
+                                      : "bg-white text-gray-700 border-gray-300"
+                                  }`}
+                                >
+                                  {b}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
+                            Car types supported
+                          </label>
+                          <div className="flex flex-wrap gap-2 max-h-32 overflow-auto border border-gray-200 dark:border-slate-800 rounded-lg p-2 bg-white dark:bg-slate-900">
+                            {CAR_TYPES.map((t) => {
+                              const selected = (s.carTypes || []).includes(t);
+                              return (
+                                <button
+                                  key={t}
+                                  type="button"
+                                  onClick={() =>
+                                    updateAccessory(s.id, {
+                                      carTypes: toggleMulti(s.carTypes, t),
+                                    })
+                                  }
+                                  className={`px-2 py-1 text-xs rounded-full border ${
+                                    selected
+                                      ? "bg-indigo-600 text-white border-indigo-600"
+                                      : "bg-white text-gray-700 border-gray-300"
+                                  }`}
+                                >
+                                  {t}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
