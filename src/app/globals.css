@@ -72,6 +72,11 @@ body::before {
   z-index: -1;
 }
 
+/* Google Places autocomplete dropdown */
+.pac-container {
+  z-index: 99999 !important;
+}
+
 /* Dark mode utility fallbacks to prevent invisible text */
 html.dark .text-black {
   color: #e2e8f0;

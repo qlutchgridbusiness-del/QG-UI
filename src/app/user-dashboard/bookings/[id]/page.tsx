@@ -13,6 +13,8 @@ type Service = {
   minPrice?: number;
   maxPrice?: number;
   durationMinutes?: number;
+  brands?: string[];
+  carTypes?: string[];
   business: {
     id: string;
     name: string;
@@ -37,6 +39,9 @@ type Booking = {
   afterServiceImages?: string[] | null;
   business: { id: string; name: string };
   service: { id: string; name: string };
+  vehicleBrand?: string | null;
+  vehicleType?: string | null;
+  requestNotes?: string | null;
 };
 
 const TIMELINE: {
@@ -51,6 +56,53 @@ const TIMELINE: {
   { key: "VEHICLE_DELIVERED", label: "Vehicle Delivered" },
 ];
 
+const BRANDS = [
+  "Maruti Suzuki",
+  "Hyundai",
+  "Tata Motors",
+  "Mahindra",
+  "Kia",
+  "Toyota",
+  "Honda",
+  "MG Motor",
+  "Renault",
+  "Nissan",
+  "Volkswagen",
+  "Skoda",
+  "BYD",
+  "Mercedes-Benz",
+  "BMW",
+  "Audi",
+  "Volvo",
+  "Jaguar",
+  "Land Rover",
+  "Lexus",
+  "Porsche",
+  "Lamborghini",
+  "Ferrari",
+  "Rolls-Royce",
+  "Bentley",
+  "Mini",
+  "Force Motors",
+  "Isuzu",
+  "others",
+];
+
+const CAR_TYPES = [
+  "Hatchback",
+  "Sedan",
+  "SUV",
+  "Compact SUV",
+  "Pickup Truck",
+  "Van",
+  "Minivan",
+  "Electric Hatchback",
+  "Electric Sedan",
+  "Electric SUV",
+  "Hybrid Vehicle",
+  "CNG Vehicle",
+];
+
 export default function BookServicePage() {
   const { id } = useParams(); // serviceId
   const router = useRouter();
@@ -59,6 +111,9 @@ export default function BookServicePage() {
   const [booking, setBooking] = useState<Booking | null>(null);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+  const [vehicleBrand, setVehicleBrand] = useState("");
+  const [vehicleType, setVehicleType] = useState("");
+  const [requestNotes, setRequestNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const prevStatusRef = useRef<string | null>(null);
 
@@ -168,6 +223,19 @@ export default function BookServicePage() {
       alert("Please select date and time");
       return;
     }
+    if (
+      service &&
+      (service.pricingType === "RANGE" || service.pricingType === "QUOTE")
+    ) {
+      if (!vehicleBrand) {
+        alert("Please select a vehicle brand");
+        return;
+      }
+      if (!vehicleType) {
+        alert("Please select a vehicle type");
+        return;
+      }
+    }
 
     setLoading(true);
     try {
@@ -187,6 +255,9 @@ export default function BookServicePage() {
           businessId: service!.business.id,
           serviceId: service!.id,
           scheduledAt: `${date}T${time}:00`,
+          vehicleBrand: vehicleBrand || undefined,
+          vehicleType: vehicleType || undefined,
+          requestNotes: requestNotes || undefined,
         },
         token
       );
@@ -234,6 +305,60 @@ export default function BookServicePage() {
               </p>
             )}
           </div>
+
+          {(service.pricingType === "RANGE" ||
+            service.pricingType === "QUOTE") && (
+            <div className="bg-white rounded-xl shadow p-4 space-y-4 mb-6">
+              <div>
+                <label className="text-sm font-medium">
+                  Vehicle brand
+                </label>
+                <select
+                  value={vehicleBrand}
+                  onChange={(e) => setVehicleBrand(e.target.value)}
+                  className="w-full mt-1 p-3 border rounded-lg bg-white"
+                >
+                  <option value="">Select brand</option>
+                  {BRANDS.map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">
+                  Vehicle type
+                </label>
+                <select
+                  value={vehicleType}
+                  onChange={(e) => setVehicleType(e.target.value)}
+                  className="w-full mt-1 p-3 border rounded-lg bg-white"
+                >
+                  <option value="">Select type</option>
+                  {CAR_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">
+                  Additional details (optional)
+                </label>
+                <textarea
+                  value={requestNotes}
+                  onChange={(e) => setRequestNotes(e.target.value)}
+                  placeholder="Tell the business about your vehicle or specific requirements"
+                  className="w-full mt-1 p-3 border rounded-lg"
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
 
           {/* DATE & TIME */}
           <div className="bg-white rounded-xl shadow p-4 space-y-4">
@@ -288,6 +413,21 @@ export default function BookServicePage() {
                 Amount: ₹{booking.totalAmount}
               </p>
             ) : null}
+            {(booking.vehicleBrand || booking.vehicleType) && (
+              <div className="text-sm text-gray-600 mt-2 space-y-1">
+                {booking.vehicleBrand && (
+                  <div>Brand: {booking.vehicleBrand}</div>
+                )}
+                {booking.vehicleType && (
+                  <div>Type: {booking.vehicleType}</div>
+                )}
+              </div>
+            )}
+            {booking.requestNotes && (
+              <div className="text-sm text-gray-600 mt-2">
+                Notes: {booking.requestNotes}
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-xl shadow p-4">

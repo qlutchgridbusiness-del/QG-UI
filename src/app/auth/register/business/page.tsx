@@ -951,11 +951,22 @@ export default function BusinessRegisterPage() {
         return "Please add at least 3 items in total (services + accessories).";
       }
       for (const s of [...namedServices, ...namedAccessories]) {
-        if (s.pricingType === "FIXED" && !s.price) {
+        if (s.pricingType === "FIXED" && (!s.price || s.price <= 0)) {
           return `Enter a price for "${s.name}".`;
         }
-        if (s.pricingType === "RANGE" && (!s.minPrice || !s.maxPrice)) {
+        if (
+          s.pricingType === "RANGE" &&
+          (!s.minPrice || !s.maxPrice || s.minPrice <= 0 || s.maxPrice <= 0)
+        ) {
           return `Enter a price range for "${s.name}".`;
+        }
+        if (
+          s.pricingType === "RANGE" &&
+          s.minPrice &&
+          s.maxPrice &&
+          s.minPrice > s.maxPrice
+        ) {
+          return `Minimum price cannot exceed maximum price for "${s.name}".`;
         }
       }
     }
@@ -1117,6 +1128,49 @@ export default function BusinessRegisterPage() {
       },
       () => setLocationError("Unable to fetch location. Please try again."),
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+    );
+  }
+
+  function handleAddressSearch() {
+    if (!geocoderRef.current || !addressQuery.trim()) {
+      setLocationError("Please enter an address to search.");
+      return;
+    }
+    geocoderRef.current.geocode(
+      { address: addressQuery.trim() },
+      (results: any) => {
+        if (!results?.[0]?.geometry?.location) {
+          setLocationError("Address not found. Try a different query.");
+          return;
+        }
+        const loc = results[0].geometry.location;
+        const lat = loc.lat();
+        const lng = loc.lng();
+        const formatted = results[0].formatted_address || addressQuery.trim();
+        updatePayload({
+          address: formatted,
+          latitude: String(lat),
+          longitude: String(lng),
+        });
+        setAddressQuery(formatted);
+        setLocationError(null);
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.setCenter({ lat, lng });
+          mapInstanceRef.current.setZoom(15);
+        }
+        const google = (window as any).google;
+        if (google?.maps && mapInstanceRef.current) {
+          if (!markerRef.current) {
+            markerRef.current = new google.maps.Marker({
+              position: { lat, lng },
+              map: mapInstanceRef.current,
+              draggable: true,
+            });
+          } else {
+            markerRef.current.setPosition({ lat, lng });
+          }
+        }
+      },
     );
   }
 
@@ -1356,7 +1410,7 @@ export default function BusinessRegisterPage() {
                       <label className="text-sm font-medium mb-1 block">
                         Business address
                       </label>
-                      <div className="relative">
+                      <div className="relative flex gap-2">
                         <input
                           ref={addressInputRef}
                           value={addressQuery}
@@ -1372,6 +1426,13 @@ export default function BusinessRegisterPage() {
                           placeholder="Search area, street, landmark…"
                           className="w-full p-3 pl-10 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                         />
+                        <button
+                          type="button"
+                          onClick={handleAddressSearch}
+                          className="px-3 py-2 text-xs border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-200"
+                        >
+                          Search
+                        </button>
                       </div>
                       <button
                         type="button"

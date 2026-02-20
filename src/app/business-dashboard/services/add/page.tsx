@@ -65,6 +65,27 @@ export default function AddServicePage() {
       alert("Service name is required");
       return;
     }
+    if (form.pricingType === "FIXED") {
+      if (!form.price || form.price <= 0) {
+        alert("Please enter a valid fixed price");
+        return;
+      }
+    }
+    if (form.pricingType === "RANGE") {
+      if (
+        !form.minPrice ||
+        !form.maxPrice ||
+        form.minPrice <= 0 ||
+        form.maxPrice <= 0
+      ) {
+        alert("Please enter a valid price range");
+        return;
+      }
+      if (form.minPrice > form.maxPrice) {
+        alert("Minimum price cannot exceed maximum price");
+        return;
+      }
+    }
 
     setSaving(true);
     try {

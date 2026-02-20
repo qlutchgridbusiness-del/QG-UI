@@ -77,6 +77,31 @@ export default function BusinessServicesPage() {
   ------------------------- */
   async function saveService() {
     if (!editing) return;
+    if (!editing.name?.trim()) {
+      message.error("Service name is required");
+      return;
+    }
+    if (editing.pricingType === "FIXED") {
+      if (!editing.price || editing.price <= 0) {
+        message.error("Please enter a valid fixed price");
+        return;
+      }
+    }
+    if (editing.pricingType === "RANGE") {
+      if (
+        !editing.minPrice ||
+        !editing.maxPrice ||
+        editing.minPrice <= 0 ||
+        editing.maxPrice <= 0
+      ) {
+        message.error("Please enter a valid price range");
+        return;
+      }
+      if (editing.minPrice > editing.maxPrice) {
+        message.error("Minimum price cannot exceed maximum price");
+        return;
+      }
+    }
     setSaving(true);
 
     try {

@@ -25,6 +25,9 @@ type Booking = {
   scheduledAt: string | null;
   createdAt: string;
   priceSnapshot?: number;
+  vehicleBrand?: string | null;
+  vehicleType?: string | null;
+  requestNotes?: string | null;
 
   user: {
     name: string;
@@ -34,6 +37,10 @@ type Booking = {
   service: {
     name: string;
     durationMinutes?: number;
+    pricingType?: "FIXED" | "RANGE" | "QUOTE";
+    price?: number | null;
+    minPrice?: number | null;
+    maxPrice?: number | null;
   };
 };
 
@@ -54,6 +61,7 @@ export default function BusinessBookingsPage() {
     booking: Booking | null;
     type: "START" | "COMPLETE" | null;
   }>({ open: false, booking: null, type: null });
+  const [detailBooking, setDetailBooking] = useState<Booking | null>(null);
 
   const [files, setFiles] = useState<File[]>([]);
   const [serviceAmount, setServiceAmount] = useState("");
@@ -251,7 +259,11 @@ export default function BusinessBookingsPage() {
 
       <div className="space-y-4">
         {bookings.map((b) => (
-          <div key={b.id} className="bg-white border rounded-xl p-5 shadow">
+          <div
+            key={b.id}
+            onClick={() => setDetailBooking(b)}
+            className="bg-white border rounded-xl p-5 shadow cursor-pointer hover:shadow-md transition"
+          >
             <div className="flex justify-between">
               <div>
                 <h3 className="font-semibold">{b.service.name}</h3>
@@ -268,13 +280,19 @@ export default function BusinessBookingsPage() {
               {b.status === "REQUESTED" && (
                 <>
                   <button
-                    onClick={() => acceptBooking(b.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      acceptBooking(b.id);
+                    }}
                     className="btn-green"
                   >
                     Accept
                   </button>
                   <button
-                    onClick={() => setRejectingBooking(b)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setRejectingBooking(b);
+                    }}
                     className="btn-red"
                   >
                     Reject
@@ -284,9 +302,10 @@ export default function BusinessBookingsPage() {
 
               {b.status === "BUSINESS_ACCEPTED" && (
                 <button
-                  onClick={() =>
-                    setImageModal({ open: true, booking: b, type: "START" })
-                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setImageModal({ open: true, booking: b, type: "START" });
+                  }}
                   className="btn-indigo"
                 >
                   Start Service
@@ -295,9 +314,10 @@ export default function BusinessBookingsPage() {
 
               {b.status === "SERVICE_STARTED" && (
                 <button
-                  onClick={() =>
-                    setImageModal({ open: true, booking: b, type: "COMPLETE" })
-                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setImageModal({ open: true, booking: b, type: "COMPLETE" });
+                  }}
                   className="btn-purple"
                 >
                   Complete Service
@@ -306,7 +326,8 @@ export default function BusinessBookingsPage() {
 
               {b.status === "PAYMENT_COMPLETED" && (
                 <button
-                  onClick={async () => {
+                  onClick={async (e) => {
+                    e.stopPropagation();
                     const token = localStorage.getItem("token");
                     await axios.put(
                       `${API_BASE}/business-bookings/${b.id}/deliver`,
@@ -317,6 +338,7 @@ export default function BusinessBookingsPage() {
                     message.success("Vehicle delivered");
                   }}
                   className="btn-green"
+                  onMouseDown={(e) => e.stopPropagation()}
                 >
                   Mark Delivered
                 </button>
@@ -382,6 +404,63 @@ export default function BusinessBookingsPage() {
         <Button type="primary" className="mt-4 w-full" onClick={submitImages}>
           Submit
         </Button>
+      </Modal>
+
+      {/* Booking Details Modal */}
+      <Modal
+        open={!!detailBooking}
+        title="Booking Details"
+        onCancel={() => setDetailBooking(null)}
+        footer={null}
+      >
+        {detailBooking && (
+          <div className="space-y-3 text-sm">
+            <div>
+              <span className="font-semibold">Service:</span>{" "}
+              {detailBooking.service.name}
+            </div>
+            <div>
+              <span className="font-semibold">Customer:</span>{" "}
+              {detailBooking.user.name} • {detailBooking.user.phone}
+            </div>
+            <div>
+              <span className="font-semibold">Status:</span>{" "}
+              {detailBooking.status}
+            </div>
+            {detailBooking.scheduledAt && (
+              <div>
+                <span className="font-semibold">Scheduled:</span>{" "}
+                {new Date(detailBooking.scheduledAt).toLocaleString()}
+              </div>
+            )}
+            {detailBooking.service.pricingType && (
+              <div>
+                <span className="font-semibold">Pricing:</span>{" "}
+                {detailBooking.service.pricingType === "FIXED" &&
+                  `₹${detailBooking.service.price ?? 0}`}
+                {detailBooking.service.pricingType === "RANGE" &&
+                  `₹${detailBooking.service.minPrice ?? 0} – ₹${
+                    detailBooking.service.maxPrice ?? 0
+                  }`}
+                {detailBooking.service.pricingType === "QUOTE" && "Quotation"}
+              </div>
+            )}
+            {(detailBooking.vehicleBrand || detailBooking.vehicleType) && (
+              <div>
+                <span className="font-semibold">Vehicle:</span>{" "}
+                {[detailBooking.vehicleBrand, detailBooking.vehicleType]
+                  .filter(Boolean)
+                  .join(" • ")}
+              </div>
+            )}
+            {detailBooking.requestNotes && (
+              <div>
+                <span className="font-semibold">Notes:</span>{" "}
+                {detailBooking.requestNotes}
+              </div>
+            )}
+          </div>
+        )}
       </Modal>
     </div>
   );
