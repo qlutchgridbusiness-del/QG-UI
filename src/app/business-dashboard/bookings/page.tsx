@@ -65,6 +65,11 @@ export default function BusinessBookingsPage() {
 
   const [files, setFiles] = useState<File[]>([]);
   const [serviceAmount, setServiceAmount] = useState("");
+  const [quoteModal, setQuoteModal] = useState<{
+    open: boolean;
+    booking: Booking | null;
+  }>({ open: false, booking: null });
+  const [quoteAmount, setQuoteAmount] = useState("");
 
   useEffect(() => {
     if (!imageModal.open) {
@@ -76,6 +81,14 @@ export default function BusinessBookingsPage() {
     setFiles([]);
     setServiceAmount("");
   }, [imageModal.open, imageModal.booking?.id, imageModal.type]);
+
+  useEffect(() => {
+    if (!quoteModal.open) {
+      setQuoteAmount("");
+      return;
+    }
+    setQuoteAmount("");
+  }, [quoteModal.open, quoteModal.booking?.id]);
 
   function detectStatusChange(prev: Booking[], next: Booking[]) {
     for (const b of next) {
@@ -279,6 +292,18 @@ export default function BusinessBookingsPage() {
             <div className="mt-4 flex gap-3 flex-wrap">
               {b.status === "REQUESTED" && (
                 <>
+                  {(b.service.pricingType === "RANGE" ||
+                    b.service.pricingType === "QUOTE") && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setQuoteModal({ open: true, booking: b });
+                      }}
+                      className="btn-indigo"
+                    >
+                      Send Quote
+                    </button>
+                  )}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -404,6 +429,51 @@ export default function BusinessBookingsPage() {
         <Button type="primary" className="mt-4 w-full" onClick={submitImages}>
           Submit
         </Button>
+      </Modal>
+
+      {/* Quote Modal */}
+      <Modal
+        open={quoteModal.open}
+        title="Propose Quote"
+        onCancel={() => setQuoteModal({ open: false, booking: null })}
+        footer={null}
+      >
+        <div className="space-y-3">
+          <Input
+            type="number"
+            placeholder="Quote amount (₹)"
+            value={quoteAmount}
+            onChange={(e) => setQuoteAmount(e.target.value)}
+          />
+          <Button
+            type="primary"
+            className="w-full"
+            onClick={async () => {
+              if (!quoteAmount || Number(quoteAmount) <= 0) {
+                message.error("Enter a valid quote amount");
+                return;
+              }
+              const token = localStorage.getItem("token");
+              if (!token || !quoteModal.booking) return;
+              try {
+                await axios.put(
+                  `${API_BASE}/business-bookings/${quoteModal.booking.id}/quote`,
+                  { quoteAmount: Number(quoteAmount) },
+                  { headers: { Authorization: `Bearer ${token}` } }
+                );
+                message.success("Quote sent");
+                setQuoteModal({ open: false, booking: null });
+                loadBookings();
+              } catch (e: any) {
+                message.error(
+                  e?.response?.data?.message || "Failed to send quote"
+                );
+              }
+            }}
+          >
+            Send Quote
+          </Button>
+        </div>
       </Modal>
 
       {/* Booking Details Modal */}

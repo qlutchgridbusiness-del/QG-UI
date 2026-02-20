@@ -360,12 +360,12 @@ export default function BusinessRegisterPage() {
           existing.addEventListener("load", () => resolve());
           return;
         }
+        (window as any).__initQlutchMap = () => resolve();
         const script = document.createElement("script");
         script.id = "google-maps-sdk";
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&v=weekly&loading=async`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=__initQlutchMap`;
         script.async = true;
         script.defer = true;
-        script.onload = () => resolve();
         script.onerror = () => reject();
         document.body.appendChild(script);
       });
@@ -374,6 +374,13 @@ export default function BusinessRegisterPage() {
       .then(() => {
         if (!addressInputRef.current) return;
         const google = (window as any).google;
+        if (!google?.maps?.Map) {
+          setMapsLoaded(false);
+          setLocationError(
+            "Google Maps failed to initialize. Ensure Maps JavaScript API + Places API are enabled and the key is unrestricted for this domain."
+          );
+          return;
+        }
         setMapsLoaded(Boolean(google?.maps?.places));
         if (mapRef.current && !mapInstanceRef.current) {
           mapInstanceRef.current = new google.maps.Map(mapRef.current, {

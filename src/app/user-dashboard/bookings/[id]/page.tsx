@@ -26,6 +26,7 @@ type Booking = {
   id: string;
   status:
     | "REQUESTED"
+    | "QUOTE_PROPOSED"
     | "BUSINESS_ACCEPTED"
     | "BUSINESS_REJECTED"
     | "SERVICE_STARTED"
@@ -35,6 +36,7 @@ type Booking = {
     | "CANCELLED";
   scheduledAt?: string | null;
   totalAmount?: number | null;
+  quoteAmount?: number | null;
   beforeServiceImages?: string[] | null;
   afterServiceImages?: string[] | null;
   business: { id: string; name: string };
@@ -49,6 +51,7 @@ const TIMELINE: {
   label: string;
 }[] = [
   { key: "REQUESTED", label: "Requested" },
+  { key: "QUOTE_PROPOSED", label: "Quote Proposed" },
   { key: "BUSINESS_ACCEPTED", label: "Accepted" },
   { key: "SERVICE_STARTED", label: "Service Started" },
   { key: "PAYMENT_PENDING", label: "Payment Pending" },
@@ -413,6 +416,11 @@ export default function BookServicePage() {
                 Amount: ₹{booking.totalAmount}
               </p>
             ) : null}
+            {booking.quoteAmount ? (
+              <p className="text-sm text-gray-700 mt-1">
+                Quoted: ₹{booking.quoteAmount}
+              </p>
+            ) : null}
             {(booking.vehicleBrand || booking.vehicleType) && (
               <div className="text-sm text-gray-600 mt-2 space-y-1">
                 {booking.vehicleBrand && (
@@ -494,6 +502,21 @@ export default function BookServicePage() {
               className="w-full py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700"
             >
               Pay Now
+            </button>
+          )}
+
+          {booking.status === "QUOTE_PROPOSED" && (
+            <button
+              onClick={async () => {
+                const token = localStorage.getItem("token");
+                if (!token) return;
+                await apiPost(`/bookings/${booking.id}/accept-quote`, {}, token);
+                const updated = await apiGet(`/bookings/${booking.id}`, token);
+                setBooking(updated);
+              }}
+              className="w-full py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
+            >
+              Accept Quote & Confirm Booking
             </button>
           )}
 
