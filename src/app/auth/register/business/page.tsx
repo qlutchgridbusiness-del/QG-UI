@@ -451,9 +451,9 @@ export default function BusinessRegisterPage() {
           }
         });
       })
-      .catch(() => {
+      .catch((error) => {
         setMapsLoaded(false);
-        setLocationError("Failed to load Google Maps. Check API key.");
+        setLocationError(`Failed to load Google Maps. Check API key., ${error}`);
       });
   }, []);
 
