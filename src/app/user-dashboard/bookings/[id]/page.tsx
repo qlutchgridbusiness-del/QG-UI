@@ -43,7 +43,7 @@ type Booking = {
   service: { id: string; name: string };
   vehicleBrand?: string | null;
   vehicleType?: string | null;
-  requestNotes?: string | null;
+  vehicleModel?: string | null;
 };
 
 const TIMELINE: {
@@ -116,8 +116,10 @@ export default function BookServicePage() {
   const [time, setTime] = useState("");
   const [vehicleBrand, setVehicleBrand] = useState("");
   const [vehicleType, setVehicleType] = useState("");
-  const [requestNotes, setRequestNotes] = useState("");
+  const [vehicleModel, setVehicleModel] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showReject, setShowReject] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
   const prevStatusRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -260,7 +262,7 @@ export default function BookServicePage() {
           scheduledAt: `${date}T${time}:00`,
           vehicleBrand: vehicleBrand || undefined,
           vehicleType: vehicleType || undefined,
-          requestNotes: requestNotes || undefined,
+          vehicleModel: vehicleModel || undefined,
         },
         token
       );
@@ -350,14 +352,13 @@ export default function BookServicePage() {
 
               <div>
                 <label className="text-sm font-medium">
-                  Additional details (optional)
+                  Model name/number (optional)
                 </label>
-                <textarea
-                  value={requestNotes}
-                  onChange={(e) => setRequestNotes(e.target.value)}
-                  placeholder="Tell the business about your vehicle or specific requirements"
+                <input
+                  value={vehicleModel}
+                  onChange={(e) => setVehicleModel(e.target.value)}
+                  placeholder="Example: Swift VXi 2022 / City ZX CVT"
                   className="w-full mt-1 p-3 border rounded-lg"
-                  rows={3}
                 />
               </div>
             </div>
@@ -431,9 +432,9 @@ export default function BookServicePage() {
                 )}
               </div>
             )}
-            {booking.requestNotes && (
+            {booking.vehicleModel && (
               <div className="text-sm text-gray-600 mt-2">
-                Notes: {booking.requestNotes}
+                Model: {booking.vehicleModel}
               </div>
             )}
           </div>
@@ -506,18 +507,74 @@ export default function BookServicePage() {
           )}
 
           {booking.status === "QUOTE_PROPOSED" && (
-            <button
-              onClick={async () => {
-                const token = localStorage.getItem("token");
-                if (!token) return;
-                await apiPost(`/bookings/${booking.id}/accept-quote`, {}, token);
-                const updated = await apiGet(`/bookings/${booking.id}`, token);
-                setBooking(updated);
-              }}
-              className="w-full py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
-            >
-              Accept Quote & Confirm Booking
-            </button>
+            <div className="space-y-3">
+              <button
+                onClick={async () => {
+                  const token = localStorage.getItem("token");
+                  if (!token) return;
+                  await apiPost(
+                    `/bookings/${booking.id}/accept-quote`,
+                    {},
+                    token
+                  );
+                  const updated = await apiGet(`/bookings/${booking.id}`, token);
+                  setBooking(updated);
+                }}
+                className="w-full py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
+              >
+                Accept Quote & Confirm Booking
+              </button>
+              <button
+                onClick={() => setShowReject(true)}
+                className="w-full py-3 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700"
+              >
+                Reject Quote
+              </button>
+            </div>
+          )}
+
+          {showReject && booking.status === "QUOTE_PROPOSED" && (
+            <div className="bg-white rounded-xl shadow p-4 space-y-3">
+              <label className="text-sm font-medium">
+                Reason for rejecting (optional)
+              </label>
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                className="w-full p-3 border rounded-lg"
+                rows={3}
+                placeholder="Share a reason (optional)"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={async () => {
+                    const token = localStorage.getItem("token");
+                    if (!token) return;
+                    await apiPost(
+                      `/bookings/${booking.id}/reject-quote`,
+                      { reason: rejectReason || undefined },
+                      token
+                    );
+                    const updated = await apiGet(`/bookings/${booking.id}`, token);
+                    setBooking(updated);
+                    setShowReject(false);
+                    setRejectReason("");
+                  }}
+                  className="flex-1 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700"
+                >
+                  Confirm Reject
+                </button>
+                <button
+                  onClick={() => {
+                    setShowReject(false);
+                    setRejectReason("");
+                  }}
+                  className="flex-1 py-2 rounded-lg border border-gray-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           )}
 
           {booking.status === "PAYMENT_COMPLETED" && (

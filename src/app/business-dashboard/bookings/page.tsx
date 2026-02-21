@@ -25,9 +25,10 @@ type Booking = {
   scheduledAt: string | null;
   createdAt: string;
   priceSnapshot?: number;
+  quoteAmount?: number | null;
   vehicleBrand?: string | null;
   vehicleType?: string | null;
-  requestNotes?: string | null;
+  vehicleModel?: string | null;
 
   user: {
     name: string;
@@ -79,7 +80,11 @@ export default function BusinessBookingsPage() {
     }
     // reset on every new modal open to avoid leaking files across bookings/types
     setFiles([]);
-    setServiceAmount("");
+    setServiceAmount(
+      imageModal.type === "COMPLETE" && imageModal.booking?.quoteAmount
+        ? String(imageModal.booking.quoteAmount)
+        : ""
+    );
   }, [imageModal.open, imageModal.booking?.id, imageModal.type]);
 
   useEffect(() => {
@@ -304,15 +309,17 @@ export default function BusinessBookingsPage() {
                       Send Quote
                     </button>
                   )}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      acceptBooking(b.id);
-                    }}
-                    className="btn-green"
-                  >
-                    Accept
-                  </button>
+                  {b.service.pricingType === "FIXED" && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setImageModal({ open: true, booking: b, type: "START" });
+                      }}
+                      className="btn-indigo"
+                    >
+                      Start Service
+                    </button>
+                  )}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -515,6 +522,12 @@ export default function BusinessBookingsPage() {
                 {detailBooking.service.pricingType === "QUOTE" && "Quotation"}
               </div>
             )}
+            {detailBooking.quoteAmount ? (
+              <div>
+                <span className="font-semibold">Quoted:</span> ₹
+                {detailBooking.quoteAmount}
+              </div>
+            ) : null}
             {(detailBooking.vehicleBrand || detailBooking.vehicleType) && (
               <div>
                 <span className="font-semibold">Vehicle:</span>{" "}
@@ -523,10 +536,10 @@ export default function BusinessBookingsPage() {
                   .join(" • ")}
               </div>
             )}
-            {detailBooking.requestNotes && (
+            {detailBooking.vehicleModel && (
               <div>
-                <span className="font-semibold">Notes:</span>{" "}
-                {detailBooking.requestNotes}
+                <span className="font-semibold">Model:</span>{" "}
+                {detailBooking.vehicleModel}
               </div>
             )}
           </div>
