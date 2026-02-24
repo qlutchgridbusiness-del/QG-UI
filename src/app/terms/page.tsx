@@ -13,16 +13,16 @@ export default function TermsPage() {
 
         <div className="space-y-4 text-sm text-gray-700 dark:text-slate-300 leading-6">
           <p>
-            These Terms & Conditions (“Terms”) govern your access to and use of
-            the QlutchGrid platform (“Platform”) operated by RideLink Innovations
-            Private Limited (“QlutchGrid”, “we”, “our”, or “us”).
+            These Terms & Conditions ("Terms") govern your access to and use of
+            the QlutchGrid platform ("Platform") operated by RideLink
+            Innovations Private Limited ("QlutchGrid", "we", "our", or "us").
           </p>
           <p>
-            By accessing or using our website, mobile application, or any related
-            services (collectively, the “Platform”), you (“User”, “you”, or
-            “your”) agree to be bound by these Terms and our Privacy Policy,
-            which is incorporated by reference. If you disagree with any part of
-            these Terms, you must not use the Platform.
+            By accessing or using our website, mobile application, or any
+            related services (collectively, the "Platform"), you ("User",
+            "you", or "your") agree to be bound by these Terms and our Privacy
+            Policy, which is incorporated by reference. If you disagree with
+            any part of these Terms, you must not use the Platform.
           </p>
 
           <h2 className="text-base font-semibold text-gray-900 dark:text-slate-100">
@@ -30,8 +30,8 @@ export default function TermsPage() {
           </h2>
           <p>
             QlutchGrid is a technology platform and digital marketplace that
-            connects Users with independent, third‑party automotive care service
-            providers (“Service Providers”). QlutchGrid acts only as a
+            connects Users with independent, third-party automotive care service
+            providers ("Service Providers"). QlutchGrid acts only as a
             technology intermediary and facilitator and does not itself perform
             or guarantee the services offered by Service Providers.
           </p>
@@ -40,22 +40,23 @@ export default function TermsPage() {
             2. The Platform and Service Providers
           </h2>
           <p>
-            2.1. Intermediary Status: You understand and agree that QlutchGrid is
-            solely a technology intermediary as defined under the Information
+            2.1. Intermediary Status: You understand and agree that QlutchGrid
+            is solely a technology intermediary as defined under the Information
             Technology Act, 2000. The Platform facilitates the booking of
-            services; QlutchGrid does not provide, employ, or endorse any Service
-            Provider, nor does it provide automotive care services.
+            services; QlutchGrid does not provide, employ, or endorse any
+            Service Provider, nor does it provide automotive care services.
           </p>
           <p>
             2.2. Independent Contractors: Service Providers are independent
-            contractors and are not employees, agents, or partners of QlutchGrid.
-            They are solely responsible for the services they provide.
+            contractors and are not employees, agents, or partners of
+            QlutchGrid. They are solely responsible for the services they
+            provide.
           </p>
           <p>
             2.3. Service Contract: The contract for the provision of automotive
             care services is solely between you and the Service Provider.
-            QlutchGrid is not a party to this contract and has no obligations or
-            liabilities under it.
+            QlutchGrid is not a party to this contract and has no obligations
+            or liabilities under it.
           </p>
           <p>
             2.4. Disclaimer of Vetting: QlutchGrid may perform a basic
@@ -91,9 +92,7 @@ export default function TermsPage() {
             • Attempt to circumvent the Platform to book services directly with
             a Service Provider you first discovered through the Platform.
           </p>
-          <p>
-            • Impersonate any person or entity or provide false information.
-          </p>
+          <p>• Impersonate any person or entity or provide false information.</p>
 
           <h2 className="text-base font-semibold text-gray-900 dark:text-slate-100">
             4. Bookings, Payments, and Refunds
@@ -111,13 +110,13 @@ export default function TermsPage() {
             right to offer additional discounts/offers to the USERS.
           </p>
           <p>
-            4.3. Payment Collection Agent: You appoint QlutchGrid as the limited
-            payment collection agent for the Service Provider. Payment is made
-            through QlutchGrid’s integrated gateways. Your payment to QlutchGrid
-            for services shall be considered the same as payment made directly by
-            you to the Service Provider. QlutchGrid collects these payments on
-            behalf of the Service Providers and settles the amounts to them after
-            deducting applicable platform fees and taxes.
+            4.3. Payment Collection Agent: You appoint QlutchGrid as the
+            limited payment collection agent for the Service Provider. Payment
+            is made through QlutchGrid's integrated gateways. Your payment to
+            QlutchGrid for services shall be considered the same as payment made
+            directly by you to the Service Provider. QlutchGrid collects these
+            payments on behalf of the Service Providers and settles the amounts
+            to them after deducting applicable platform fees and taxes.
           </p>
           <p>
             4.4. Cancellations & Refunds: Refunds and cancellations are governed
@@ -131,8 +130,8 @@ export default function TermsPage() {
             5. User-Generated Content
           </h2>
           <p>
-            5.1. License Grant: The Platform may permit you to post content, such
-            as reviews, ratings, comments, or photos (“User Content”). By
+            5.1. License Grant: The Platform may permit you to post content,
+            such as reviews, ratings, comments, or photos ("User Content"). By
             submitting User Content, you grant QlutchGrid a perpetual,
             irrevocable, worldwide, royalty-free, non-exclusive, sub-licensable
             license to use, reproduce, modify, adapt, publish, translate, create
@@ -152,8 +151,8 @@ export default function TermsPage() {
           </h2>
           <p>
             By creating an account, you consent to receive communications from
-            QlutchGrid and its Service Providers, including notifications, alerts,
-            and updates via In-App, email, SMS, or WhatsApp regarding:
+            QlutchGrid and its Service Providers, including notifications,
+            alerts, and updates via In-App, email, SMS, or WhatsApp regarding:
           </p>
           <p>• Booking confirmations, reminders, and status updates.</p>
           <p>• Customer support communication.</p>
@@ -184,30 +183,30 @@ export default function TermsPage() {
             9. Disclaimers and Limitation of Liability
           </h2>
           <p>
-            9.1. Service Disclaimer: The Platform is provided on an “as is” and
-            “as available” basis. QlutchGrid makes no representation or warranty
+            9.1. Service Disclaimer: The Platform is provided on an "as is" and
+            "as available" basis. QlutchGrid makes no representation or warranty
             regarding the reliability, timeliness, quality, suitability, or
-            availability of the services provided by Service Providers. QlutchGrid
-            is not liable for any act, omission, or negligence by a Service
-            Provider, nor for any service delays, damages, poor quality, or
-            dissatisfaction.
+            availability of the services provided by Service Providers.
+            QlutchGrid is not liable for any act, omission, or negligence by a
+            Service Provider, nor for any service delays, damages, poor quality,
+            or dissatisfaction.
           </p>
           <p>
             9.2. Exclusion of Liability: To the maximum extent permitted by law,
-            QlutchGrid, its officers, directors, and employees shall not be liable
-            for any indirect, incidental, special, exemplary, punitive, or
-            consequential losses or damages (including lost profits, lost data,
-            or personal injury) arising from your use of the Platform or the
-            services procured via the Platform.
+            QlutchGrid, its officers, directors, and employees shall not be
+            liable for any indirect, incidental, special, exemplary, punitive,
+            or consequential losses or damages (including lost profits, lost
+            data, or personal injury) arising from your use of the Platform or
+            the services procured via the Platform.
           </p>
           <p>
             9.3. Monetary Cap on Liability: To the extent not prohibited by law,
             in no event shall QlutchGrid's total aggregate liability to you for
             any and all claims, damages, or losses arising from or related to
-            these Terms or your use of the Platform exceed the greater of: (a)
-            the total booking value of the single transaction that is the subject
-            of the dispute; or (b) a fixed sum of Five Thousand Indian Rupees
-            (₹5,000).
+            these Terms or your use of the Platform exceed the greater of:
+            (a) the total booking value of the single transaction that is the
+            subject of the dispute; or (b) a fixed sum of Five Thousand Indian
+            Rupees (₹5,000).
           </p>
           <p>
             This limitation shall apply even if QlutchGrid has been advised of
@@ -237,8 +236,8 @@ export default function TermsPage() {
             QlutchGrid reserves the right to modify or update these Terms at any
             time. Updated Terms will be published on the Platform and shall take
             effect immediately upon posting. Your continued use of the Platform
-            after such posting constitutes your binding acceptance of the revised
-            Terms.
+            after such posting constitutes your binding acceptance of the
+            revised Terms.
           </p>
 
           <h2 className="text-base font-semibold text-gray-900 dark:text-slate-100">
@@ -259,18 +258,13 @@ export default function TermsPage() {
             Officer are provided below. For any queries, support, or grievances,
             please contact:
           </p>
+          <p>Grievance Officer</p>
+          <p>RideLink Innovations Private Limited</p>
           <p>
-            Grievance Officer
-            <br />
-            RideLink Innovations Private Limited
-            <br />
             INNOV8 Millenia, II Floor, East Wing, RMZ Millenia Business Park,
-            <br />
-            Campus 1A, 143, Dr. M.G.R. Road, Perungudi, Chennai – 600096
           </p>
-          <p>
-            Email: business@qlutchgrid.com or support@qlutchgrid.com
-          </p>
+          <p>Campus 1A, 143, Dr. M.G.R. Road, Perungudi, Chennai - 600096</p>
+          <p>Email: business@qlutchgrid.com or support@qlutchgrid.com</p>
         </div>
       </div>
     </div>
